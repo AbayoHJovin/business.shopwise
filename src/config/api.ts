@@ -20,6 +20,7 @@ export const API_ENDPOINTS = {
   BUSINESS: {
     LIST: `${API_BASE_URL}/api/businesses`,
     USER_BUSINESSES: `${API_BASE_URL}/api/businesses/user`,
+    GET_MINE: `${API_BASE_URL}/api/business/getMine`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
     CREATE: `${API_BASE_URL}/api/businesses`,
     UPDATE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,

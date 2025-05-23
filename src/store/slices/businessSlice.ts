@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../index';
+import { API_ENDPOINTS, DEFAULT_REQUEST_OPTIONS } from '@/config/api';
 
 // Define auth state interface to avoid circular imports
 interface AuthState {
@@ -10,11 +11,16 @@ interface AuthState {
   error: string | null;
 }
 
-// Define types for business data
-interface Location {
-  latitude: number;
-  longitude: number;
-  address?: string;
+// Define types for business data based on the backend DTOs
+export interface LocationDto {
+  province?: string;
+  district?: string;
+  sector?: string;
+  cell?: string;
+  village?: string;
+  latitude?: number;
+  longitude?: number;
+  formattedLocation?: string;
 }
 
 interface BusinessHours {
@@ -24,12 +30,23 @@ interface BusinessHours {
   isClosed: boolean;
 }
 
+export interface BusinessDto {
+  id: string;
+  name: string;
+  location: LocationDto;
+  about?: string;
+  websiteLink?: string;
+  collaboratorIds?: string[];
+  productCount?: number;
+  employeeCount?: number;
+}
+
 export interface Business {
   id: string;
   name: string;
   description: string;
   category: string;
-  location: Location;
+  location: LocationDto;
   contactPhone: string;
   contactEmail: string;
   website?: string;
@@ -43,7 +60,7 @@ export interface Business {
 
 interface BusinessState {
   businesses: Business[];
-  userBusinesses: Business[];
+  userBusinesses: BusinessDto[];
   currentBusiness: Business | null;
   isLoading: boolean;
   error: string | null;
@@ -78,34 +95,54 @@ export const fetchAllBusinesses = createAsyncThunk(
   }
 );
 
-export const fetchUserBusinesses = createAsyncThunk<Business[], void, { state: RootState }>(
-  'business/fetchUserBusinesses',
-  async (_, { getState, rejectWithValue }) => {
+// Fetch user businesses using the /api/business/getMine endpoint
+export const fetchMyBusinesses = createAsyncThunk<BusinessDto[], void, { state: RootState }>(
+  'business/fetchMyBusinesses',
+  async (_, { rejectWithValue }) => {
     try {
-      const state = getState();
-      const auth = state.auth as AuthState;
-      const token = auth.token;
-
-      if (!token) {
-        return rejectWithValue('Authentication required');
-      }
-
-      // Replace with your actual API endpoint
-      const response = await fetch('/api/businesses/user', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      // Use the getMine endpoint with credentials included
+      const response = await fetch(API_ENDPOINTS.BUSINESS.GET_MINE, {
+        method: 'GET',
+        ...DEFAULT_REQUEST_OPTIONS,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        return rejectWithValue(data.message || 'Failed to fetch user businesses');
+        let errorMessage = 'Failed to fetch user businesses';
+        
+        if (data.error) {
+          errorMessage = data.error;
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+        
+        return rejectWithValue(errorMessage);
       }
 
       return data;
-    } catch (error) {
-      return rejectWithValue('Network error occurred');
+    } catch (error: any) {
+      console.error('Error fetching user businesses:', error);
+      return rejectWithValue(error.message || 'Network error occurred');
+    }
+  }
+);
+
+// Legacy function for backward compatibility
+export const fetchUserBusinesses = createAsyncThunk<Business[], void, { state: RootState }>(
+  'business/fetchUserBusinesses',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      // Use the new fetchMyBusinesses function instead
+      const resultAction = await dispatch(fetchMyBusinesses());
+      
+      if (fetchMyBusinesses.fulfilled.match(resultAction)) {
+        return resultAction.payload as unknown as Business[];
+      }
+      
+      return rejectWithValue('Failed to fetch user businesses');
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Network error occurred');
     }
   }
 );
@@ -253,26 +290,39 @@ const businessSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchAllBusinesses.fulfilled, (state, action: PayloadAction<Business[]>) => {
+      .addCase(fetchAllBusinesses.fulfilled, (state, action) => {
         state.isLoading = false;
         state.businesses = action.payload;
-        state.error = null;
       })
       .addCase(fetchAllBusinesses.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
-      });
+      })
 
-    // Fetch user businesses
+    // Fetch my businesses using the /api/business/getMine endpoint
+    builder
+      .addCase(fetchMyBusinesses.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchMyBusinesses.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.userBusinesses = action.payload;
+      })
+      .addCase(fetchMyBusinesses.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+
+    // Legacy fetch user businesses
     builder
       .addCase(fetchUserBusinesses.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchUserBusinesses.fulfilled, (state, action: PayloadAction<Business[]>) => {
+      .addCase(fetchUserBusinesses.fulfilled, (state, action) => {
         state.isLoading = false;
         state.userBusinesses = action.payload;
-        state.error = null;
       })
       .addCase(fetchUserBusinesses.rejected, (state, action) => {
         state.isLoading = false;

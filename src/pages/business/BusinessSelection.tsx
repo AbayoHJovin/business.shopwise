@@ -3,84 +3,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Building2, MapPin, ExternalLink, Loader2 } from 'lucide-react';
+import { Plus, Building2, MapPin, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchMyBusinesses } from '@/store/slices/businessSlice';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-// Mock business data type
-interface Business {
-  id: string;
-  name: string;
-  about: string;
-  websiteLink?: string;
-  location: {
-    province: string;
-    district: string;
-    sector: string;
-    cell: string;
-    village: string;
-    latitude?: number;
-    longitude?: number;
-  };
-  createdAt: string;
-}
+// Business data types are imported from the business slice
 
 const BusinessSelection = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const { userBusinesses, isLoading, error } = useAppSelector(state => state.business);
 
   useEffect(() => {
-    // In a real app, this would be an API call to fetch the user's businesses
-    const fetchBusinesses = async () => {
-      setIsLoading(true);
-      try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Mock data - in a real app, this would come from your backend
-        const mockBusinesses: Business[] = [
-          {
-            id: '1',
-            name: 'Kigali Fashion Store',
-            about: 'A premium clothing store offering the latest fashion trends in Kigali.',
-            websiteLink: 'https://kigalifashion.com',
-            location: {
-              province: 'Kigali',
-              district: 'Nyarugenge',
-              sector: 'Nyarugenge',
-              cell: 'Kiyovu',
-              village: 'Kiyovu',
-              latitude: -1.9441,
-              longitude: 30.0619
-            },
-            createdAt: '2023-05-15'
-          },
-          {
-            id: '2',
-            name: 'Huye Grocery Market',
-            about: 'Local grocery store providing fresh produce and household essentials.',
-            location: {
-              province: 'Southern',
-              district: 'Huye',
-              sector: 'Ngoma',
-              cell: 'Ngoma',
-              village: 'Ngoma',
-            },
-            createdAt: '2023-08-22'
-          }
-        ];
-        
-        setBusinesses(mockBusinesses);
-      } catch (error) {
-        console.error('Error fetching businesses:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBusinesses();
-  }, []);
+    // Fetch the user's businesses from the API
+    dispatch(fetchMyBusinesses());
+  }, [dispatch]);
 
   const handleBusinessSelect = (businessId: string) => {
     // In a real app, you might want to store the selected business in context or localStorage
@@ -94,7 +34,7 @@ const BusinessSelection = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <Building2 className="h-6 w-6 text-primary mr-2" />
-            <h1 className="text-xl font-bold text-gray-900">BusinessHive</h1>
+            <h1 className="text-xl font-bold text-gray-900">Shopwise</h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">Welcome, {user?.fullName || 'User'}</span>
@@ -117,6 +57,16 @@ const BusinessSelection = () => {
               Create New Business
             </Button>
           </div>
+          
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -137,15 +87,17 @@ const BusinessSelection = () => {
                 </Card>
               ))}
             </div>
-          ) : businesses.length > 0 ? (
+          ) : userBusinesses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {businesses.map((business) => (
+              {userBusinesses.map((business) => (
                 <Card key={business.id} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-200">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl">{business.name}</CardTitle>
                     <CardDescription className="flex items-center">
                       <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                      {business.location.district}, {business.location.province}
+                      {business.location.district && business.location.province ? 
+                        `${business.location.district}, ${business.location.province}` : 
+                        business.location.formattedLocation || 'Location not specified'}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -162,6 +114,16 @@ const BusinessSelection = () => {
                         <ExternalLink className="h-3.5 w-3.5 mr-1" />
                         {business.websiteLink}
                       </a>
+                    )}
+                    {business.productCount !== undefined && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        Products: {business.productCount}
+                      </p>
+                    )}
+                    {business.employeeCount !== undefined && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        Employees: {business.employeeCount}
+                      </p>
                     )}
                   </CardContent>
                   <CardFooter className="flex justify-end">
@@ -193,7 +155,7 @@ const BusinessSelection = () => {
       <footer className="bg-white border-t py-4">
         <div className="container mx-auto px-4">
           <p className="text-sm text-center text-gray-500">
-            © {new Date().getFullYear()} BusinessHive. All rights reserved.
+            &copy; {new Date().getFullYear()} Shopwise. All rights reserved.
           </p>
         </div>
       </footer>
