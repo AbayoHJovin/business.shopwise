@@ -7,8 +7,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 
+interface Product {
+  id: number | string;
+  name: string;
+  description: string;
+  images: string[] | { url: string; alt?: string }[];
+  packets: number;
+  itemsPerPacket: number;
+  pricePerItem: number;
+  fulfillmentCost: number;
+  dateAdded: string;
+  businessId?: string;
+  totalItems?: number;
+  totalValue?: number;
+}
+
 interface ProductDialogProps {
-  product: any | null;
+  product: Product | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

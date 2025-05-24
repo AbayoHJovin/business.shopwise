@@ -11,7 +11,7 @@ interface ProductImage {
 }
 
 interface Product {
-  id: number;
+  id: number | string;
   name: string;
   description: string;
   images: string[] | ProductImage[];
@@ -20,12 +20,15 @@ interface Product {
   pricePerItem: number;
   fulfillmentCost: number;
   dateAdded: string;
+  businessId?: string;
+  totalItems?: number;
+  totalValue?: number;
 }
 
 interface ProductCardProps {
   product: Product;
   onEdit: () => void;
-  onDelete: (productId: number) => void;
+  onDelete: (productId: number | string) => void;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete }) => {
@@ -114,7 +117,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete }) 
           
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mt-2">
             <div>
-              <span className="text-muted-foreground">Price:</span> ${product.pricePerItem.toFixed(2)}
+              <span className="text-muted-foreground">Price:</span> RWF {product.pricePerItem.toFixed(2)}
             </div>
             <div>
               <span className="text-muted-foreground">Stock:</span> {totalStock} items
@@ -126,7 +129,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete }) 
               <span className="text-muted-foreground">Items per packet:</span> {product.itemsPerPacket}
             </div>
             <div className="col-span-2">
-              <span className="text-muted-foreground">Fulfillment Cost:</span> ${product.fulfillmentCost.toFixed(2)}
+              <span className="text-muted-foreground">Fulfillment Cost:</span> RWF {product.fulfillmentCost.toFixed(2)}
             </div>
           </div>
         </CardContent>
