@@ -66,6 +66,26 @@ interface BusinessState {
   error: string | null;
 }
 
+// Helper function to convert BusinessDto to Business
+const convertBusinessDtoToBusiness = (dto: BusinessDto): Business => {
+  return {
+    id: dto.id,
+    name: dto.name,
+    description: dto.about || '',
+    category: '', // Default value, update if you have this information
+    location: dto.location,
+    contactPhone: '', // Default value, update if you have this information
+    contactEmail: '', // Default value, update if you have this information
+    website: dto.websiteLink,
+    businessHours: [], // Default value, update if you have this information
+    images: [], // Default value, update if you have this information
+    ownerId: '', // Default value, update if you have this information
+    isVerified: false, // Default value, update if you have this information
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+};
+
 // Initial state
 const initialState: BusinessState = {
   businesses: [],
@@ -166,37 +186,46 @@ export const fetchBusinessById = createAsyncThunk(
   }
 );
 
-export const createBusiness = createAsyncThunk<Business, Partial<Business>, { state: RootState }>(
+// Define the CreateBusinessRequest type based on the backend DTO
+export interface CreateBusinessRequest {
+  name: string;
+  location: LocationDto;
+  about?: string;
+  websiteLink?: string;
+}
+
+export const createBusiness = createAsyncThunk<BusinessDto, CreateBusinessRequest, { state: RootState }>(
   'business/create',
-  async (businessData, { getState, rejectWithValue }) => {
+  async (businessData, { rejectWithValue, dispatch }) => {
     try {
-      const state = getState();
-      const auth = state.auth as AuthState;
-      const token = auth.token;
-
-      if (!token) {
-        return rejectWithValue('Authentication required');
-      }
-
-      // Replace with your actual API endpoint
-      const response = await fetch('/api/businesses', {
+      // Use the API_ENDPOINTS.BUSINESS.CREATE endpoint with credentials included
+      const response = await fetch(API_ENDPOINTS.BUSINESS.CREATE, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        ...DEFAULT_REQUEST_OPTIONS,
         body: JSON.stringify(businessData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        return rejectWithValue(data.message || 'Failed to create business');
+        let errorMessage = 'Failed to create business';
+        
+        if (data.error) {
+          errorMessage = data.error;
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+        
+        return rejectWithValue(errorMessage);
       }
 
+      // After successful creation, refresh the user's businesses list
+      dispatch(fetchMyBusinesses());
+      
       return data;
-    } catch (error) {
-      return rejectWithValue('Network error occurred');
+    } catch (error: any) {
+      console.error('Error creating business:', error);
+      return rejectWithValue(error.message || 'Network error occurred');
     }
   }
 );
@@ -243,12 +272,11 @@ export const deleteBusiness = createAsyncThunk<string, string, { state: RootStat
   'business/delete',
   async (businessId, { getState, rejectWithValue }) => {
     try {
-      const state = getState();
-      const auth = state.auth as AuthState;
+      const { auth } = getState();
       const token = auth.token;
 
       if (!token) {
-        return rejectWithValue('Authentication required');
+        return rejectWithValue('Not authenticated');
       }
 
       // Replace with your actual API endpoint
@@ -271,6 +299,39 @@ export const deleteBusiness = createAsyncThunk<string, string, { state: RootStat
   }
 );
 
+// Select business thunk
+export const selectBusiness = createAsyncThunk<{ message: string }, string, { state: RootState }>(
+  'business/select',
+  async (businessId, { rejectWithValue }) => {
+    try {
+      // Use the API_ENDPOINTS.BUSINESS.SELECT endpoint with credentials included
+      const response = await fetch(API_ENDPOINTS.BUSINESS.SELECT(businessId), {
+        method: 'POST',
+        ...DEFAULT_REQUEST_OPTIONS,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to select business';
+        
+        if (data.error) {
+          errorMessage = data.error;
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+        
+        return rejectWithValue(errorMessage);
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error('Error selecting business:', error);
+      return rejectWithValue(error.message || 'Network error occurred');
+    }
+  }
+);
+
 // Create the business slice
 const businessSlice = createSlice({
   name: 'business',
@@ -284,20 +345,6 @@ const businessSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Fetch all businesses
-    builder
-      .addCase(fetchAllBusinesses.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(fetchAllBusinesses.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.businesses = action.payload;
-      })
-      .addCase(fetchAllBusinesses.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      })
 
     // Fetch my businesses using the /api/business/getMine endpoint
     builder
@@ -351,10 +398,11 @@ const businessSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(createBusiness.fulfilled, (state, action: PayloadAction<Business>) => {
+      .addCase(createBusiness.fulfilled, (state, action: PayloadAction<BusinessDto>) => {
         state.isLoading = false;
         state.userBusinesses.push(action.payload);
-        state.currentBusiness = action.payload;
+        // Convert the DTO to a Business object for currentBusiness
+        state.currentBusiness = convertBusinessDtoToBusiness(action.payload);
         state.error = null;
       })
       .addCase(createBusiness.rejected, (state, action) => {
@@ -397,16 +445,33 @@ const businessSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(deleteBusiness.fulfilled, (state, action: PayloadAction<string>) => {
+      .addCase(deleteBusiness.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.businesses = state.businesses.filter(b => b.id !== action.payload);
-        state.userBusinesses = state.userBusinesses.filter(b => b.id !== action.payload);
+        // Remove the deleted business from the userBusinesses array
+        state.userBusinesses = state.userBusinesses.filter(business => business.id !== action.payload);
         if (state.currentBusiness && state.currentBusiness.id === action.payload) {
           state.currentBusiness = null;
         }
         state.error = null;
       })
       .addCase(deleteBusiness.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+      
+    // Select business
+    builder
+      .addCase(selectBusiness.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(selectBusiness.fulfilled, (state, action) => {
+        state.isLoading = false;
+        // We don't need to update any state here as the backend sets a cookie
+        // The currentBusiness will be set when we navigate to the dashboard and fetch the selected business
+        state.error = null;
+      })
+      .addCase(selectBusiness.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

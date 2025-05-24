@@ -110,7 +110,7 @@ const Sidebar = () => {
         </div>
         
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          <NavItem icon={Home} label="Dashboard" href="/" isCollapsed={isCollapsed} />
+          <NavItem icon={Home} label="Dashboard" href="/dashboard" isCollapsed={isCollapsed} />
           <NavItem icon={Package} label="Products" href="/products" isCollapsed={isCollapsed} />
           <NavItem icon={Users} label="Employees" href="/employees" isCollapsed={isCollapsed} />
           <NavItem icon={ClipboardList} label="Expenses" href="/expenses" isCollapsed={isCollapsed} />

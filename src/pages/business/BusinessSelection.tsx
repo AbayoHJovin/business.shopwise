@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Building2, MapPin, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Building2, MapPin, ExternalLink, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchMyBusinesses } from '@/store/slices/businessSlice';
+import { fetchMyBusinesses, selectBusiness } from '@/store/slices/businessSlice';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/components/ui/use-toast';
 
 // Business data types are imported from the business slice
 
@@ -15,17 +16,53 @@ const BusinessSelection = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
   const { userBusinesses, isLoading, error } = useAppSelector(state => state.business);
+  const [selectingBusinessId, setSelectingBusinessId] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch the user's businesses from the API
     dispatch(fetchMyBusinesses());
   }, [dispatch]);
 
-  const handleBusinessSelect = (businessId: string) => {
-    // In a real app, you might want to store the selected business in context or localStorage
-    localStorage.setItem('selectedBusinessId', businessId);
-    navigate('/dashboard');
+  const handleBusinessSelect = async (businessId: string) => {
+    try {
+      setSelectingBusinessId(businessId);
+      
+      // Dispatch the selectBusiness action
+      const resultAction = await dispatch(selectBusiness(businessId));
+      
+      if (selectBusiness.fulfilled.match(resultAction)) {
+        // Show success toast
+        toast({
+          title: "Business Selected",
+          description: "You've successfully selected this business.",
+          variant: "default",
+          duration: 3000,
+        });
+        
+        // Navigate to dashboard
+        navigate('/dashboard');
+      } else if (selectBusiness.rejected.match(resultAction)) {
+        // Error is handled by the business slice and displayed in the UI
+        toast({
+          title: "Selection Failed",
+          description: resultAction.payload as string || "Failed to select business",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+    } catch (err) {
+      console.error("Error selecting business:", err);
+      toast({
+        title: "Selection Failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setSelectingBusinessId(null);
+    }
   };
 
   return (
@@ -127,8 +164,18 @@ const BusinessSelection = () => {
                     )}
                   </CardContent>
                   <CardFooter className="flex justify-end">
-                    <Button onClick={() => handleBusinessSelect(business.id)}>
-                      Select Business
+                    <Button 
+                      onClick={() => handleBusinessSelect(business.id)}
+                      disabled={selectingBusinessId === business.id || isLoading}
+                    >
+                      {selectingBusinessId === business.id ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Selecting...
+                        </>
+                      ) : (
+                        'Select Business'
+                      )}
                     </Button>
                   </CardFooter>
                 </Card>

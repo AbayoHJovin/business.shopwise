@@ -21,10 +21,15 @@ export const API_ENDPOINTS = {
     LIST: `${API_BASE_URL}/api/businesses`,
     USER_BUSINESSES: `${API_BASE_URL}/api/businesses/user`,
     GET_MINE: `${API_BASE_URL}/api/business/getMine`,
+    CREATE: `${API_BASE_URL}/api/business/create`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
-    CREATE: `${API_BASE_URL}/api/businesses`,
     UPDATE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
+    SELECT: (id: string) => `${API_BASE_URL}/api/business/select/${id}`,
+  },
+  // Dashboard endpoints
+  DASHBOARD: {
+    GET: `${API_BASE_URL}/api/dashboard`,
   },
 };
 

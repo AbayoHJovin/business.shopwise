@@ -9,14 +9,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { Building2, ArrowLeft, Loader2, MapPin } from 'lucide-react';
+import { Building2, ArrowLeft, Loader2, MapPin, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import LocationPicker from '@/components/maps/LocationPicker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Redux imports
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { createBusiness } from '@/store/slices/businessSlice';
+import { createBusiness, CreateBusinessRequest } from '@/store/slices/businessSlice';
 
 // Define the form schema with validation based on the DTO
 const businessSchema = z.object({
@@ -73,29 +74,33 @@ const BusinessCreate = () => {
   // Handle form submission
   const onSubmit = async (values: BusinessFormValues) => {
     try {
-      // Convert string latitude/longitude to numbers or undefined
-      const formattedValues = {
-        ...values,
+      // Create a properly formatted request object based on the CreateBusinessRequest interface
+      const businessRequest: CreateBusinessRequest = {
+        name: values.name,
+        about: values.about,
+        websiteLink: values.websiteLink || undefined,
         location: {
-          ...values.location,
+          province: values.location.province,
+          district: values.location.district,
+          sector: values.location.sector,
+          cell: values.location.cell,
+          village: values.location.village,
+          // Convert string latitude/longitude to numbers or undefined
           latitude: values.location.latitude ? Number(values.location.latitude) : undefined,
           longitude: values.location.longitude ? Number(values.location.longitude) : undefined,
         },
-        ownerId: user?.id, // Add owner ID from auth context
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       };
       
-      console.log('Business data to submit:', formattedValues);
+      console.log('Business data to submit:', businessRequest);
       
       // Dispatch the createBusiness action to Redux
-      const resultAction = await dispatch(createBusiness(formattedValues));
+      const resultAction = await dispatch(createBusiness(businessRequest));
       
       // Check if the action was fulfilled (successful)
       if (createBusiness.fulfilled.match(resultAction)) {
         // Show success message
         toast.success('Business created successfully!', {
-          description: 'Redirecting to business dashboard...',
+          description: 'Redirecting to business selection page...',
         });
         
         // Redirect to business selection page after creation
@@ -103,8 +108,11 @@ const BusinessCreate = () => {
           navigate('/business/select');
         }, 1500);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating business:', error);
+      toast.error('Failed to create business', {
+        description: error.message || 'An unexpected error occurred',
+      });
     }
   };
 
@@ -114,7 +122,7 @@ const BusinessCreate = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
             <Building2 className="h-6 w-6 text-primary mr-2" />
-            <h1 className="text-xl font-bold text-gray-900">BusinessHive</h1>
+            <h1 className="text-xl font-bold text-gray-900">Shopwise</h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">Welcome, {user?.fullName || 'User'}</span>
@@ -142,6 +150,13 @@ const BusinessCreate = () => {
               <CardDescription>
                 Enter your business details to get started
               </CardDescription>
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -413,7 +428,7 @@ const BusinessCreate = () => {
       <footer className="bg-white border-t py-4 mt-8">
         <div className="container mx-auto px-4">
           <p className="text-sm text-center text-gray-500">
-            © {new Date().getFullYear()} BusinessHive. All rights reserved.
+            © {new Date().getFullYear()} Shopwise. All rights reserved.
           </p>
         </div>
       </footer>
