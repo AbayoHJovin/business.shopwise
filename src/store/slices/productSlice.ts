@@ -124,8 +124,8 @@ export const fetchPaginatedProducts = createAsyncThunk<
         return rejectWithValue('No business selected. Please select a business first.');
       }
       
-      // Add the businessId as a query parameter
-      const url = `${API_ENDPOINTS.PRODUCTS.GET_ALL(page, size)}&businessId=${business.currentBusiness.id}`;
+      // No need to add businessId as it's obtained from cookies in the backend
+      const url = API_ENDPOINTS.PRODUCTS.GET_ALL(page, size);
       
       const response = await fetch(url, {
         ...DEFAULT_REQUEST_OPTIONS,

@@ -93,25 +93,39 @@ const Products = () => {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
 
-  // First, check if we have a selected business, and if not, try to fetch it
+  // Fetch products on component mount
   useEffect(() => {
+    // Reset pagination state when component mounts
+    dispatch(resetPagination());
+    
+    // First, check if we have a selected business
     if (!currentBusiness) {
+      // Try to fetch the current business
       dispatch(fetchCurrentSelectedBusiness())
         .unwrap()
+        .then(() => {
+          // After successfully fetching the business, fetch products
+          return dispatch(fetchPaginatedProducts({ page: 0, size: 10 })).unwrap();
+        })
         .catch((error) => {
-          // If we can't get a business, the error handler below will redirect
-          console.log('No business selected or error fetching current business:', error);
+          // If we can't get a business, show error and redirect
+          if (error.includes('No business selected') || error.includes('select a business')) {
+            toast({
+              title: "No business selected",
+              description: "Please select a business to view products",
+              variant: "destructive"
+            });
+            navigate('/business/select');
+          } else {
+            toast({
+              title: "Error",
+              description: error || "Failed to load products. Please try again later.",
+              variant: "destructive"
+            });
+          }
         });
-    }
-  }, [dispatch, currentBusiness]);
-
-  // Fetch the first page of products once we have a business
-  useEffect(() => {
-    if (currentBusiness) {
-      // Reset pagination state when component mounts or business changes
-      dispatch(resetPagination());
-      
-      // Fetch first page of products
+    } else {
+      // If we already have a business, fetch products directly
       dispatch(fetchPaginatedProducts({ page: 0, size: 10 }))
         .unwrap()
         .catch((error) => {
@@ -122,12 +136,12 @@ const Products = () => {
           });
         });
     }
-      
+    
     // Cleanup: reset pagination when component unmounts
     return () => {
       dispatch(resetPagination());
     };
-  }, [dispatch, toast, currentBusiness?.id]);
+  }, [dispatch, toast, navigate]); // Remove currentBusiness from dependencies to ensure it runs on mount
   
   // Handle infinite scroll using Intersection Observer
   const loadMoreProducts = useCallback(() => {
