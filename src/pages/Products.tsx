@@ -1,5 +1,6 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,8 +20,14 @@ import ProductDialog from '@/components/products/ProductDialog';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAppDispatch, useAppSelector } from '@/hooks/store';
+import { fetchPaginatedProducts, resetPagination, ProductImage, Product as StoreProduct } from '@/store/slices/productSlice';
+import { fetchCurrentSelectedBusiness } from '@/store/slices/businessSlice';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { toast } from '@/hooks/use-toast';
 
-// Define product interface
+// Define product interface for UI components
 interface Product {
   id: number | string;
   name: string;
@@ -36,53 +43,21 @@ interface Product {
   totalValue?: number;
 }
 
-// Mock product data - replace with API call
-const mockProducts: Product[] = [
-  {
-    id: 1,
-    name: "Premium Chair",
-    description: "High quality ergonomic office chair with lumbar support",
-    images: ["https://images.unsplash.com/photo-1518770660439-4636190af475", "https://images.unsplash.com/photo-1460925895917-afdab827c52f"],
-    packets: 15,
-    itemsPerPacket: 1,
-    pricePerItem: 129.99,
-    fulfillmentCost: 25,
-    dateAdded: "2023-10-15"
-  },
-  {
-    id: 2,
-    name: "Office Desk",
-    description: "Spacious wooden desk with cable management system",
-    images: ["https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d"],
-    packets: 8,
-    itemsPerPacket: 1,
-    pricePerItem: 299.99,
-    fulfillmentCost: 45,
-    dateAdded: "2023-09-22"
-  },
-  {
-    id: 3,
-    name: "Ergonomic Keyboard",
-    description: "Split design keyboard with mechanical switches",
-    images: ["https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"],
-    packets: 30,
-    itemsPerPacket: 5,
-    pricePerItem: 79.99,
-    fulfillmentCost: 12,
-    dateAdded: "2023-11-05"
-  },
-  {
-    id: 4,
-    name: "Monitor Stand",
-    description: "Adjustable aluminum monitor stand with cable management",
-    images: ["https://images.unsplash.com/photo-1531297484001-80022131f5a1"],
-    packets: 22,
-    itemsPerPacket: 2,
-    pricePerItem: 59.99,
-    fulfillmentCost: 8,
-    dateAdded: "2023-10-30"
-  }
-];
+// Helper function to convert store products to UI products
+const convertStoreProductToUIProduct = (product: StoreProduct): Product => {
+  return {
+    ...product,
+    // Convert ProductImage[] to the format expected by UI components
+    images: product.images.map(img => ({
+      url: img.imageUrl,
+      alt: product.name
+    })),
+    // Ensure dateAdded is always provided
+    dateAdded: product.dateAdded || new Date().toISOString()
+  };
+};
+
+// No mock data - using real data from the API
 
 type SortOption = 'name' | 'dateAdded' | 'price' | 'stock';
 type SortDirection = 'asc' | 'desc';
@@ -90,61 +65,149 @@ type ViewMode = 'grid' | 'table';
 
 const Products = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [sortOption, setSortOption] = useState<SortOption>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Get products and pagination state from Redux store
+  const { 
+    items: storeProducts, 
+    isLoading, 
+    error, 
+    pagination 
+  } = useAppSelector(state => state.products);
+  
+  // Convert store products to UI products
+  const products = useMemo(() => {
+    return storeProducts.map(convertStoreProductToUIProduct);
+  }, [storeProducts]);
+  
+  // Get current business from Redux store
+  const { currentBusiness } = useAppSelector(state => state.business);
+  
+  // Reference to the observer for infinite scrolling
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
 
-  // Fetch products - this would be replaced with an API call
+  // First, check if we have a selected business, and if not, try to fetch it
   useEffect(() => {
-    // Simulate API call
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        // This would be an API call in a real application
-        // const response = await api.get('/products');
-        // setProducts(response.data);
-        
-        // For now, use mock data with calculated properties
-        const productsWithCalculatedFields = mockProducts.map(product => ({
-          ...product,
-          totalItems: product.packets * product.itemsPerPacket,
-          totalValue: product.packets * product.itemsPerPacket * product.pricePerItem
-        }));
-        
-        setProducts(productsWithCalculatedFields);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load products. Please try again later.",
-          variant: "destructive"
+    if (!currentBusiness) {
+      dispatch(fetchCurrentSelectedBusiness())
+        .unwrap()
+        .catch((error) => {
+          // If we can't get a business, the error handler below will redirect
+          console.log('No business selected or error fetching current business:', error);
         });
-      } finally {
-        setIsLoading(false);
+    }
+  }, [dispatch, currentBusiness]);
+
+  // Fetch the first page of products once we have a business
+  useEffect(() => {
+    if (currentBusiness) {
+      // Reset pagination state when component mounts or business changes
+      dispatch(resetPagination());
+      
+      // Fetch first page of products
+      dispatch(fetchPaginatedProducts({ page: 0, size: 10 }))
+        .unwrap()
+        .catch((error) => {
+          toast({
+            title: "Error",
+            description: error || "Failed to load products. Please try again later.",
+            variant: "destructive"
+          });
+        });
+    }
+      
+    // Cleanup: reset pagination when component unmounts
+    return () => {
+      dispatch(resetPagination());
+    };
+  }, [dispatch, toast, currentBusiness?.id]);
+  
+  // Handle infinite scroll using Intersection Observer
+  const loadMoreProducts = useCallback(() => {
+    if (!pagination.hasMore || pagination.isFetchingNextPage) return;
+    
+    const nextPage = pagination.currentPage + 1;
+    dispatch(fetchPaginatedProducts({ 
+      page: nextPage, 
+      size: pagination.pageSize 
+    }));
+  }, [dispatch, pagination.currentPage, pagination.hasMore, pagination.isFetchingNextPage, pagination.pageSize]);
+  
+  // Setup intersection observer for infinite scroll
+  useEffect(() => {
+    // Disconnect previous observer if it exists
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+    
+    // Create new observer
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && pagination.hasMore && !pagination.isFetchingNextPage && !isLoading) {
+          loadMoreProducts();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    
+    // Observe the loading element if it exists
+    if (loadingRef.current) {
+      observerRef.current.observe(loadingRef.current);
+    }
+    
+    // Cleanup
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
       }
     };
-
-    fetchProducts();
-  }, [toast]);
+  }, [loadMoreProducts, pagination.hasMore, pagination.isFetchingNextPage, isLoading]);
+  
+  // Handle errors and redirect if no business is selected
+  useEffect(() => {
+    if (error) {
+      // Check if the error indicates no business is selected
+      if (error.includes('No business selected') || error.includes('select a business')) {
+        toast({
+          title: "No business selected",
+          description: "Please select a business to view products",
+          variant: "destructive"
+        });
+        // Redirect to business selection page
+        navigate('/business/select');
+      } else {
+        toast({
+          title: "Error",
+          description: error || "Failed to load products. Please try again later.",
+          variant: "destructive"
+        });
+      }
+    }
+  }, [error, toast, navigate]);
 
   const handleDeleteConfirm = (productId: number | string) => {
     // Would call API to delete product
     const productToDelete = products.find(p => p.id === productId);
     if (!productToDelete) return;
     
-    // In a real app, you would make an API call here
-    // api.delete(`/products/${productId}`);
+    // In a real app, you would make an API call here using the deleteProduct thunk
+    // dispatch(deleteProduct(productId.toString()));
     
-    // Update local state
-    setProducts(products.filter(p => p.id !== productId));
-    
+    // For now, just show a toast message
     toast({
       title: "Product deleted",
       description: `${productToDelete.name} has been removed successfully.`,
     });
+    
+    // After successful deletion, you might want to refresh the product list
+    // dispatch(fetchPaginatedProducts({ page: 0, size: pagination.pageSize, resetList: true }));
   };
 
   const handleEditProduct = (product: Product) => {
@@ -161,6 +224,7 @@ const Products = () => {
   };
 
   const sortedProducts = useMemo(() => {
+    if (!products.length) return [];
     return [...products].sort((a, b) => {
       let compareValueA, compareValueB;
 
@@ -206,16 +270,26 @@ const Products = () => {
   };
 
   // Calculate total product count
-  const totalProducts = products.length;
+  const totalProducts = pagination.totalCount || products.length;
 
   return (
     <MainLayout title="Products">
       <div className="page-container p-4 md:p-6">
+        {/* Error Alert */}
+        {error && !error.includes('No business selected') && !error.includes('select a business') && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div className="mb-4 sm:mb-0">
             <h1 className="text-2xl font-bold tracking-tight">Products</h1>
             <p className="text-muted-foreground">
               Manage your product inventory <span className="font-medium">({totalProducts} total)</span>
+              {currentBusiness && <span className="ml-1">for {currentBusiness.name}</span>}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -234,7 +308,7 @@ const Products = () => {
               </TabsList>
             </Tabs>
             <Button className="self-start sm:self-auto" asChild>
-              <Link to="/products/create">
+              <Link to="/products/new">
                 <Plus className="mr-2" /> Add Product
               </Link>
             </Button>
@@ -287,8 +361,8 @@ const Products = () => {
           </CardContent>
         </Card>
         
-        {isLoading ? (
-          // Loading state
+        {isLoading && products.length === 0 ? (
+          // Initial loading state
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
               <Card key={index} className="h-[300px] animate-pulse">
@@ -327,14 +401,34 @@ const Products = () => {
               </Card>
             )}
             
-            {sortedProducts.length === 0 && (
+            {/* No products state */}
+            {sortedProducts.length === 0 && !isLoading && (
               <div className="text-center p-10">
                 <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">No products found</h3>
                 <p className="text-muted-foreground mb-4">Add your first product to get started with inventory management.</p>
                 <Button asChild>
-                  <Link to="/products/create">Add Your First Product</Link>
+                  <Link to="/products/new">Add Your First Product</Link>
                 </Button>
+              </div>
+            )}
+            
+            {/* Infinite scroll loading indicator */}
+            {(products.length > 0 || pagination.isFetchingNextPage) && (
+              <div 
+                ref={loadingRef} 
+                className="w-full py-8 flex justify-center items-center"
+              >
+                {pagination.isFetchingNextPage && (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Loading more products...</p>
+                  </div>
+                )}
+                
+                {!pagination.hasMore && products.length > 0 && !pagination.isFetchingNextPage && (
+                  <p className="text-sm text-muted-foreground">No more products to load</p>
+                )}
               </div>
             )}
           </>

@@ -186,6 +186,40 @@ export const fetchBusinessById = createAsyncThunk(
   }
 );
 
+// Fetch the currently selected business from the backend
+// This uses the cookie that was set when the user selected a business
+export const fetchCurrentSelectedBusiness = createAsyncThunk<Business, void, { state: RootState }>(
+  'business/fetchCurrentSelected',
+  async (_, { rejectWithValue }) => {
+    try {
+      // This endpoint should return the current selected business based on the cookie
+      const response = await fetch(API_ENDPOINTS.BUSINESS.GET_SELECTED, {
+        method: 'GET',
+        ...DEFAULT_REQUEST_OPTIONS,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        let errorMessage = 'No business selected';
+        
+        if (data.error) {
+          errorMessage = data.error;
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+        
+        return rejectWithValue(errorMessage);
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Error fetching current business:', error);
+      return rejectWithValue(error.message || 'Failed to fetch current business');
+    }
+  }
+);
+
 // Define the CreateBusinessRequest type based on the backend DTO
 export interface CreateBusinessRequest {
   name: string;
@@ -474,7 +508,24 @@ const businessSlice = createSlice({
       .addCase(selectBusiness.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
-      });
+      })
+        
+      // Fetch current selected business
+      builder
+        .addCase(fetchCurrentSelectedBusiness.pending, (state) => {
+          state.isLoading = true;
+          state.error = null;
+        })
+        .addCase(fetchCurrentSelectedBusiness.fulfilled, (state, action: PayloadAction<Business>) => {
+          state.isLoading = false;
+          state.currentBusiness = action.payload;
+          state.error = null;
+        })
+        .addCase(fetchCurrentSelectedBusiness.rejected, (state, action) => {
+          state.isLoading = false;
+          state.currentBusiness = null;
+          state.error = action.payload as string;
+        });
   },
 });
 

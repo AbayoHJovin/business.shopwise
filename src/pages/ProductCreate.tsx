@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
-import { Image, Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AppDispatch, RootState } from '@/store';
+import { createProduct, createProductWithImages, ProductRequest } from '@/store/slices/productSlice';
+import { fetchCurrentSelectedBusiness } from '@/store/slices/businessSlice';
+import { Image, Plus, Trash2, ArrowLeft, Loader2 } from 'lucide-react';
 
 interface ProductFormData {
   name: string;
@@ -18,12 +22,25 @@ interface ProductFormData {
   fulfillmentCost: number;
 }
 
+interface ImageFile {
+  file: File;
+  preview: string;
+}
+
 const ProductCreate = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const { toast } = useToast();
-  const [productImages, setProductImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
   
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ProductFormData>({
+  const { isLoading, error } = useSelector((state: RootState) => state.products);
+  const { currentBusiness } = useSelector((state: RootState) => state.business);
+  
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors, isSubmitting } 
+  } = useForm<ProductFormData>({
     defaultValues: {
       name: '',
       description: '',
@@ -33,44 +50,121 @@ const ProductCreate = () => {
       fulfillmentCost: 0
     }
   });
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      // In a real application, you would upload the files to a server
-      // Here we're just creating local URLs for preview
-      const newImages = Array.from(e.target.files).map(file => URL.createObjectURL(file));
-      
-      // Limit to 3 images total
-      const updatedImages = [...productImages, ...newImages].slice(0, 3);
-      setProductImages(updatedImages);
-      
-      toast({
-        title: "Image added",
-        description: `${newImages.length} image(s) have been added to your product.`,
+  
+  // Check if a business is selected
+  useEffect(() => {
+    dispatch(fetchCurrentSelectedBusiness())
+      .unwrap()
+      .catch(() => {
+        toast({
+          title: "No business selected",
+          description: "Please select a business before adding products.",
+          variant: "destructive"
+        });
+        navigate('/businesses');
       });
+  }, [dispatch, navigate, toast]);
+  
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Image must be less than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Only image files are allowed",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        if (event.target && event.target.result) {
+          setImageFiles(prev => [...prev, {
+            file,
+            preview: event.target!.result as string
+          }]);
+          toast({
+            title: "Image added",
+            description: "The image has been added to your product."
+          });
+        }
+      };
+      
+      reader.readAsDataURL(file);
     }
   };
 
   const handleRemoveImage = (index: number) => {
-    setProductImages(prev => prev.filter((_, i) => i !== index));
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
     toast({
       title: "Image removed",
       description: "The image has been removed from your product."
     });
   };
 
-  const onSubmit = (data: ProductFormData) => {
-    // Would call API to create product here
-    console.log("Submitting product:", { ...data, images: productImages });
-    
-    // Show success message
-    toast({
-      title: "Product created",
-      description: `${data.name} has been added to your products.`,
-    });
-    
-    // Navigate back to products list
-    navigate('/products');
+  const onSubmit = async (data: ProductFormData) => {
+    try {
+      if (!currentBusiness) {
+        toast({
+          title: "No business selected",
+          description: "Please select a business before adding products.",
+          variant: "destructive"
+        });
+        navigate('/businesses');
+        return;
+      }
+      
+      // Prepare product data
+      const productData: ProductRequest = {
+        name: data.name,
+        description: data.description,
+        packets: data.packets,
+        itemsPerPacket: data.itemsPerPacket,
+        pricePerItem: data.pricePerItem,
+        fulfillmentCost: data.fulfillmentCost
+      };
+      
+      // Determine if we need to use the with-images endpoint
+      if (imageFiles.length > 0) {
+        // Extract the actual File objects
+        const files = imageFiles.map(img => img.file);
+        
+        // Dispatch the action to create product with images
+        await dispatch(createProductWithImages({ productData, files })).unwrap();
+      } else {
+        // Create product without images
+        await dispatch(createProduct(productData)).unwrap();
+      }
+      
+      // Show success message
+      toast({
+        title: "Product created",
+        description: `${data.name} has been added to your products.`,
+      });
+      
+      // Navigate back to products list
+      navigate('/products');
+    } catch (err: any) {
+      toast({
+        title: "Failed to create product",
+        description: err.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -97,10 +191,10 @@ const ProductCreate = () => {
                   <Label className="mb-2 block">Product Images (Max 3)</Label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     {/* Existing Images */}
-                    {productImages.map((image, index) => (
+                    {imageFiles.map((image, index) => (
                       <div key={index} className="relative h-32 bg-gray-100 rounded-md overflow-hidden">
                         <img 
-                          src={image} 
+                          src={image.preview} 
                           alt={`Product image ${index + 1}`} 
                           className="w-full h-full object-cover" 
                         />
@@ -117,7 +211,7 @@ const ProductCreate = () => {
                     ))}
                     
                     {/* Image Upload Button */}
-                    {productImages.length < 3 && (
+                    {imageFiles.length < 3 && (
                       <div className="h-32 border-2 border-dashed border-gray-300 rounded-md flex flex-col items-center justify-center text-muted-foreground hover:bg-gray-50 cursor-pointer">
                         <Label 
                           htmlFor="image-upload" 
@@ -125,7 +219,7 @@ const ProductCreate = () => {
                         >
                           <Image className="h-6 w-6 mb-2" />
                           <span className="text-sm font-medium">Upload Image</span>
-                          <span className="text-xs mt-1">{3 - productImages.length} remaining</span>
+                          <span className="text-xs mt-1">{3 - imageFiles.length} remaining</span>
                         </Label>
                         <Input 
                           id="image-upload"
@@ -262,9 +356,18 @@ const ProductCreate = () => {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Product
+                <Button type="submit" disabled={isSubmitting || isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Product
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

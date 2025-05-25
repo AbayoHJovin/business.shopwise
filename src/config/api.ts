@@ -21,11 +21,22 @@ export const API_ENDPOINTS = {
     LIST: `${API_BASE_URL}/api/businesses`,
     USER_BUSINESSES: `${API_BASE_URL}/api/businesses/user`,
     GET_MINE: `${API_BASE_URL}/api/business/getMine`,
+    GET_SELECTED: `${API_BASE_URL}/api/business/selected`,
     CREATE: `${API_BASE_URL}/api/business/create`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
     UPDATE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
     SELECT: (id: string) => `${API_BASE_URL}/api/business/select/${id}`,
+  },
+  // Products endpoints
+  PRODUCTS: {
+    GET_ALL: (page: number, size: number) => `${API_BASE_URL}/api/products/getAll?page=${page}&size=${size}`,
+    GET_BY_BUSINESS: (businessId: string) => `${API_BASE_URL}/api/products/business/${businessId}`,
+    GET_BY_ID: (id: string) => `${API_BASE_URL}/api/products/${id}`,
+    CREATE: `${API_BASE_URL}/api/products`,
+    CREATE_WITH_IMAGES: `${API_BASE_URL}/api/products/with-images`,
+    UPDATE: (id: string) => `${API_BASE_URL}/api/products/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/products/${id}`,
   },
   // Dashboard endpoints
   DASHBOARD: {

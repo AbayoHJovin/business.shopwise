@@ -152,7 +152,7 @@ const Index = () => {
               Start adding products, employees, or sales to see your business metrics here.
             </p>
             <div className="flex gap-4">
-              <Button onClick={() => navigate('/products/create')}>Add Products</Button>
+              <Button onClick={() => navigate('/products/new')}>Add Products</Button>
               <Button variant="outline" onClick={() => navigate('/employees/create')}>Add Employees</Button>
             </div>
           </div>
@@ -302,7 +302,7 @@ const Index = () => {
                       <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <h3 className="text-lg font-medium mb-2">No products found</h3>
                       <p className="text-muted-foreground mb-4">You don't have any products in your shop yet.</p>
-                      <Button onClick={() => navigate('/products/create')}>Add Your First Product</Button>
+                      <Button onClick={() => navigate('/products/new')}>Add Your First Product</Button>
                     </div>
                   )}
                 </CardContent>
