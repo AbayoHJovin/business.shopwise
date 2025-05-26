@@ -70,11 +70,15 @@ export const API_ENDPOINTS = {
   },
   // Sales endpoints
   SALES: {
-    GET_BY_DATE: `${API_BASE_URL}/api/sales/date`,
+    GET_BY_DATE: (date: string) => `${API_BASE_URL}/api/sales/date?date=${date}`,
     LOG_SALE: `${API_BASE_URL}/api/sales/log`,
     CREATE: `${API_BASE_URL}/api/sales`,
     UPDATE: (id: string) => `${API_BASE_URL}/api/sales/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/api/sales/${id}`,
+  },
+  // Daily summaries endpoints
+  DAILY_SUMMARIES: {
+    GET_BY_DATE: (date: string) => `${API_BASE_URL}/api/daily-summaries/date?date=${date}`,
   },
 };
 
