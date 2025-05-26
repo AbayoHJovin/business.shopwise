@@ -97,7 +97,8 @@ export const fetchSalesByDate = createAsyncThunk<SalesApiResponse, string, { sta
   'sales/fetchByDate',
   async (date, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.SALES.GET_BY_DATE}?date=${date}`, {
+      // Use the function correctly by passing the date parameter
+      const response = await fetch(API_ENDPOINTS.SALES.GET_BY_DATE(date), {
         ...DEFAULT_REQUEST_OPTIONS,
         method: 'GET',
       });
