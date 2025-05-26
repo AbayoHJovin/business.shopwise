@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
   // Products endpoints
   PRODUCTS: {
     GET_ALL: (page: number, size: number) => `${API_BASE_URL}/api/products/getAll?page=${page}&size=${size}`,
+    SEARCH: (keyword: string) => `${API_BASE_URL}/api/products/search?keyword=${encodeURIComponent(keyword)}`,
     GET_BY_BUSINESS: (businessId: string) => `${API_BASE_URL}/api/products/business/${businessId}`,
     GET_BY_ID: (id: string) => `${API_BASE_URL}/api/products/${id}`,
     CREATE: `${API_BASE_URL}/api/products`,

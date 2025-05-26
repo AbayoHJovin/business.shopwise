@@ -38,13 +38,33 @@ import { API_ENDPOINTS, DEFAULT_REQUEST_OPTIONS } from '@/config/api';
 import { logSale, SaleRecordRequest } from '@/store/slices/salesSlice';
 
 // Define product interface
+interface ProductImage {
+  id: string;
+  imageUrl: string;
+  publicId: string;
+  productId: string;
+}
+
 interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
+  packets: number;
   itemsPerPacket: number;
-  imageUrl?: string;
+  pricePerItem: number; // This is the price field
+  fulfillmentCost: number;
+  businessId: string;
+  totalItems: number;
+  totalValue: number;
+  images: ProductImage[];
+}
+
+interface ProductsResponse {
+  hasMore: boolean;
+  pageSize: number;
+  currentPage: number;
+  totalCount: number;
+  products: Product[];
 }
 
 // Form validation schema
@@ -124,34 +144,88 @@ const SaleAdd: React.FC = () => {
     
     setIsLoadingProducts(true);
     try {
-      const size = 10; // Number of products per page
-      let url = `${API_ENDPOINTS.PRODUCTS.GET_ALL(pageNumber, size)}`;
+      let response;
       
-      if (query) {
-        url += `&query=${encodeURIComponent(query)}`;
-      }
-      
-      const response = await fetch(url, {
-        ...DEFAULT_REQUEST_OPTIONS,
-        method: 'GET',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      
-      const data = await response.json();
-      
-      if (pageNumber === 0) {
-        setProducts(data.content);
+      // Use search endpoint if query is provided, otherwise use pagination
+      if (query && query.trim() !== '') {
+        // Show loading state during search
+        setProducts([]);
+        
+        response = await fetch(API_ENDPOINTS.PRODUCTS.SEARCH(query), {
+          ...DEFAULT_REQUEST_OPTIONS,
+          method: 'GET',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to search products');
+        }
+        
+        const searchData = await response.json();
+        console.log('Search response:', searchData);
+        
+        // Handle the specific response format with products array inside
+        if (searchData && searchData.products && Array.isArray(searchData.products)) {
+          setProducts(searchData.products);
+          setHasMore(searchData.hasMore || false);
+        } else if (Array.isArray(searchData)) {
+          // Handle direct array response if API changes
+          setProducts(searchData);
+          setHasMore(false);
+        } else {
+          console.error('Unexpected search response format:', searchData);
+          setProducts([]);
+          setHasMore(false);
+        }
       } else {
-        setProducts(prev => [...prev, ...data.content]);
+        // Use paginated endpoint for initial load and scrolling
+        const size = 10; // Number of products per page
+        response = await fetch(API_ENDPOINTS.PRODUCTS.GET_ALL(pageNumber, size), {
+          ...DEFAULT_REQUEST_OPTIONS,
+          method: 'GET',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        
+        const paginatedData = await response.json();
+        console.log('Paginated response:', paginatedData);
+        
+        // Handle the specific response format with products array inside
+        if (paginatedData && paginatedData.products && Array.isArray(paginatedData.products)) {
+          if (pageNumber === 0) {
+            setProducts(paginatedData.products);
+          } else {
+            setProducts(prev => [...prev, ...paginatedData.products]);
+          }
+          setHasMore(paginatedData.hasMore || false);
+        } else if (paginatedData.content && Array.isArray(paginatedData.content)) {
+          // Spring pagination format as fallback
+          if (pageNumber === 0) {
+            setProducts(paginatedData.content);
+          } else {
+            setProducts(prev => [...prev, ...paginatedData.content]);
+          }
+          setHasMore(!paginatedData.last);
+        } else if (Array.isArray(paginatedData)) {
+          // Direct array response as fallback
+          if (pageNumber === 0) {
+            setProducts(paginatedData);
+          } else {
+            setProducts(prev => [...prev, ...paginatedData]);
+          }
+          setHasMore(paginatedData.length > 0);
+        } else {
+          console.error('Unexpected paginated response format:', paginatedData);
+          setProducts([]);
+          setHasMore(false);
+        }
       }
       
-      setHasMore(!data.last);
       setPage(pageNumber);
     } catch (err: any) {
       console.error('Error fetching products:', err);
+      setSubmitError('Failed to fetch products. Please try again.');
     } finally {
       setIsLoadingProducts(false);
     }
@@ -302,59 +376,53 @@ const SaleAdd: React.FC = () => {
                               <CommandList className="max-h-[300px] overflow-auto">
                                 <CommandEmpty>No products found.</CommandEmpty>
                                 <CommandGroup>
-                                  {products.map((product, index) => {
-                                    if (index === products.length - 1) {
-                                      return (
-                                        <div key={product.id} ref={lastProductRef}>
-                                          <CommandItem
-                                            value={product.id}
-                                            onSelect={() => handleProductSelect(product)}
-                                            className="flex items-center gap-2 py-3"
-                                          >
-                                            {product.imageUrl && (
-                                              <div className="h-10 w-10 overflow-hidden rounded-md">
-                                                <img 
-                                                  src={product.imageUrl} 
-                                                  alt={product.name} 
-                                                  className="h-full w-full object-cover"
-                                                />
-                                              </div>
-                                            )}
-                                            <div className="flex flex-col">
-                                              <span className="font-medium">{product.name}</span>
-                                              <span className="text-sm text-muted-foreground">
-                                                ${product.price.toFixed(2)} | {product.itemsPerPacket} items per packet
-                                              </span>
-                                            </div>
-                                          </CommandItem>
-                                        </div>
-                                      );
-                                    }
-                                    return (
+                                  {isLoadingProducts ? (
+                                    <div className="p-4 flex flex-col space-y-2">
+                                      <Skeleton className="h-12 w-full" />
+                                      <Skeleton className="h-12 w-full" />
+                                      <Skeleton className="h-12 w-full" />
+                                    </div>
+                                  ) : products && products.length > 0 ? (
+                                    products.map((product, index) => (
                                       <CommandItem
                                         key={product.id}
                                         value={product.id}
                                         onSelect={() => handleProductSelect(product)}
                                         className="flex items-center gap-2 py-3"
+                                        ref={index === products.length - 1 ? lastProductRef : null}
                                       >
-                                        {product.imageUrl && (
-                                          <div className="h-10 w-10 overflow-hidden rounded-md">
+                                        <div className="h-10 w-10 overflow-hidden rounded-md bg-muted flex items-center justify-center">
+                                          {product.images && product.images.length > 0 ? (
                                             <img 
-                                              src={product.imageUrl} 
+                                              src={product.images[0].imageUrl} 
                                               alt={product.name} 
                                               className="h-full w-full object-cover"
+                                              onError={(e) => {
+                                                // Fallback for broken images
+                                                (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=No+Image';
+                                              }}
                                             />
-                                          </div>
-                                        )}
+                                          ) : (
+                                            <span className="text-xs text-muted-foreground">No img</span>
+                                          )}
+                                        </div>
                                         <div className="flex flex-col">
                                           <span className="font-medium">{product.name}</span>
                                           <span className="text-sm text-muted-foreground">
-                                            ${product.price.toFixed(2)} | {product.itemsPerPacket} items per packet
+                                            {product.pricePerItem ? `$${product.pricePerItem.toLocaleString()}` : '$0'} | {product.itemsPerPacket || 0} items per packet
                                           </span>
                                         </div>
                                       </CommandItem>
-                                    );
-                                  })}
+                                    ))
+                                  ) : searchQuery ? (
+                                    <div className="p-4 text-center text-sm text-muted-foreground">
+                                      No products found matching "{searchQuery}"
+                                    </div>
+                                  ) : (
+                                    <div className="p-4 text-center text-sm text-muted-foreground">
+                                      No products found
+                                    </div>
+                                  )}
                                   {isLoadingProducts && (
                                     <div className="p-4 flex justify-center">
                                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
