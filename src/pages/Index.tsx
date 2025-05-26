@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
+import BusinessAvailabilityToggle from '@/components/dashboard/BusinessAvailabilityToggle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataTable } from '@/components/ui/data-table';
@@ -140,6 +141,11 @@ const Index = () => {
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
+        )}
+        
+        {/* Business Availability Toggle */}
+        {!isLoading && !error && dashboardData && (
+          <BusinessAvailabilityToggle />
         )}
 
         {/* Empty Dashboard State */}

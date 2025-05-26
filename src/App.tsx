@@ -20,7 +20,7 @@ import ExpenseAdd from "./pages/expenses/ExpenseAdd";
 import LandingPage from "./pages/LandingPage";
 import Sales from "./pages/Sales";
 import SaleAdd from "./pages/sales/SaleAdd";
-import Availability from "./pages/Availability";
+// Availability page removed
 import Settings from "./pages/Settings";
 import SignUp from "./pages/auth/SignUp";
 import Login from "./pages/auth/Login";
@@ -65,7 +65,7 @@ const App = () => (
           <Route path="/expenses/add" element={<ReduxProtectedRoute><ExpenseAdd /></ReduxProtectedRoute>} />
           <Route path="/sales" element={<ReduxProtectedRoute><Sales /></ReduxProtectedRoute>} />
           <Route path="/sales/add" element={<ReduxProtectedRoute><SaleAdd /></ReduxProtectedRoute>} />
-          <Route path="/availability" element={<ReduxProtectedRoute><Availability /></ReduxProtectedRoute>} />
+          {/* Availability route removed */}
           <Route path="/daily-logs" element={<ReduxProtectedRoute><DailyLogs /></ReduxProtectedRoute>} />
           <Route path="/settings" element={<ReduxProtectedRoute><Settings /></ReduxProtectedRoute>} />
           <Route path="*" element={<NotFound />} />

@@ -35,6 +35,10 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
     SELECT: (id: string) => `${API_BASE_URL}/api/business/select/${id}`,
+    AVAILABILITY: {
+      GET: `${API_BASE_URL}/api/business/availability`,
+      UPDATE: `${API_BASE_URL}/api/business/availability`,
+    },
   },
   // Products endpoints
   PRODUCTS: {

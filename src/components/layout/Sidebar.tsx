@@ -115,7 +115,6 @@ const Sidebar = () => {
           <NavItem icon={Users} label="Employees" href="/employees" isCollapsed={isCollapsed} />
           <NavItem icon={ClipboardList} label="Expenses" href="/expenses" isCollapsed={isCollapsed} />
           <NavItem icon={BarChart} label="Sales" href="/sales" isCollapsed={isCollapsed} />
-          <NavItem icon={Calendar} label="Availability" href="/availability" isCollapsed={isCollapsed} />
           <NavItem icon={FileText} label="Daily Logs" href="/daily-logs" isCollapsed={isCollapsed} />
           <NavItem icon={Settings} label="Settings" href="/settings" isCollapsed={isCollapsed} />
         </nav>

@@ -8,6 +8,7 @@ import employeeReducer from '@/store/slices/employeeSlice';
 import expenseReducer from '@/store/slices/expenseSlice';
 import salesReducer from '@/store/slices/salesSlice';
 import dailySummariesReducer from '@/store/slices/dailySummariesSlice';
+import businessAvailabilityReducer from '@/store/slices/businessAvailabilitySlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     expenses: expenseReducer,
     sales: salesReducer,
     dailySummaries: dailySummariesReducer,
+    businessAvailability: businessAvailabilityReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
