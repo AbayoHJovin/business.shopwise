@@ -16,8 +16,10 @@ import EmployeeDetail from "./pages/EmployeeDetail";
 import EmployeeEdit from "./pages/EmployeeEdit";
 import EmployeeAdd from "./pages/EmployeeAdd";
 import Expenses from "./pages/Expenses";
+import ExpenseAdd from "./pages/expenses/ExpenseAdd";
 import LandingPage from "./pages/LandingPage";
 import Sales from "./pages/Sales";
+import SaleAdd from "./pages/sales/SaleAdd";
 import Availability from "./pages/Availability";
 import Settings from "./pages/Settings";
 import SignUp from "./pages/auth/SignUp";
@@ -60,7 +62,9 @@ const App = () => (
           <Route path="/employees/new" element={<ReduxProtectedRoute><EmployeeAdd /></ReduxProtectedRoute>} />
           <Route path="/employees/edit/:id" element={<ReduxProtectedRoute><EmployeeEdit /></ReduxProtectedRoute>} />
           <Route path="/expenses" element={<ReduxProtectedRoute><Expenses /></ReduxProtectedRoute>} />
+          <Route path="/expenses/add" element={<ReduxProtectedRoute><ExpenseAdd /></ReduxProtectedRoute>} />
           <Route path="/sales" element={<ReduxProtectedRoute><Sales /></ReduxProtectedRoute>} />
+          <Route path="/sales/add" element={<ReduxProtectedRoute><SaleAdd /></ReduxProtectedRoute>} />
           <Route path="/availability" element={<ReduxProtectedRoute><Availability /></ReduxProtectedRoute>} />
           <Route path="/daily-logs" element={<ReduxProtectedRoute><DailyLogs /></ReduxProtectedRoute>} />
           <Route path="/settings" element={<ReduxProtectedRoute><Settings /></ReduxProtectedRoute>} />

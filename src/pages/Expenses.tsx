@@ -28,6 +28,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 type CategoryFilter = 'All' | ExpenseCategory;
 type SortOption = 'amount' | 'title' | 'createdAt';
@@ -143,7 +144,7 @@ const Expenses = () => {
     if (compareValueA > compareValueB) return sortDirection === 'asc' ? 1 : -1;
     return 0;
   });
-
+const navigate = useNavigate()
   return (
     <MainLayout title="Expenses">
       <div className="page-container p-4 md:p-6">
@@ -167,7 +168,10 @@ const Expenses = () => {
               Total: <span className="text-primary">${totalAmount.toFixed(2)}</span>
             </p>
           </div>
-          <Button className="self-start sm:self-auto">
+          <Button 
+            className="self-start sm:self-auto"
+            onClick={() => navigate('/expenses/add')}
+          >
             <Plus className="mr-2" /> Add Expense
           </Button>
         </div>

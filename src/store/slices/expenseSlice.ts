@@ -50,6 +50,15 @@ interface ExpenseApiResponse {
   totalAmount: number;
 }
 
+// Interface for creating a new expense
+export interface CreateExpenseRequest {
+  title: string;
+  amount: number;
+  note?: string;
+  category: string;
+  createdAt: string; // ISO date string format
+}
+
 // Fetch expenses for the current business and selected date
 export const fetchExpenses = createAsyncThunk<ExpenseApiResponse, string, { state: RootState }>(
   'expenses/fetchByDate',
@@ -83,14 +92,47 @@ export const fetchExpenses = createAsyncThunk<ExpenseApiResponse, string, { stat
 );
 
 // Create a new expense
-export interface CreateExpenseRequest {
+export const createExpense = createAsyncThunk<Expense, CreateExpenseRequest, { state: RootState }>(
+  'expenses/create',
+  async (expenseData, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.EXPENSES.CREATE_EXPENSE}`, {
+        ...DEFAULT_REQUEST_OPTIONS,
+        method: 'POST',
+        body: JSON.stringify(expenseData),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        let errorMessage = 'Failed to create expense';
+        
+        if (data.error) {
+          errorMessage = data.error;
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+        
+        return rejectWithValue(errorMessage);
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error('Error creating expense:', error);
+      return rejectWithValue(error.message || 'Failed to create expense');
+    }
+  }
+);
+
+// Create a new expense for the addExpense action
+export interface AddExpenseRequest {
   title: string;
   amount: number;
   note: string;
   category: ExpenseCategory;
 }
 
-export const addExpense = createAsyncThunk<Expense, CreateExpenseRequest, { state: RootState }>(
+export const addExpense = createAsyncThunk<Expense, AddExpenseRequest, { state: RootState }>(
   'expenses/add',
   async (expenseData, { rejectWithValue }) => {
     try {
@@ -180,6 +222,21 @@ const expenseSlice = createSlice({
         state.totalAmount = action.payload.totalAmount;
       })
       .addCase(fetchExpenses.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      
+      // Create expense
+      .addCase(createExpense.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(createExpense.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = [action.payload, ...state.items];
+        state.totalAmount += action.payload.amount;
+      })
+      .addCase(createExpense.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })

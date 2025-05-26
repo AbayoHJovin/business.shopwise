@@ -1,102 +1,120 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AlertCircle, Calendar as CalendarIcon, Plus, Search } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import AddSaleForm from '@/components/sales/AddSaleForm';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchSalesByDate, setSelectedDate as setReduxSelectedDate } from '@/store/slices/salesSlice';
 
-// Mock data for sales
-const mockSales = [
-  {
-    id: '1',
-    productName: 'Premium Chair',
-    quantitySold: 2,
-    saleTime: new Date('2025-05-22T10:30:00'),
-    pricePerItem: 129.99,
-    totalSaleValue: 259.98,
-    notes: 'Customer requested delivery',
-    manuallyAdjusted: false,
-    loggedLater: true,
-    actualSaleTime: new Date('2025-05-22T11:15:00'),
-  },
-  {
-    id: '2',
-    productName: 'Office Desk',
-    quantitySold: 1,
-    saleTime: new Date('2025-05-22T14:45:00'),
-    pricePerItem: 299.99,
-    totalSaleValue: 299.99,
-    notes: '',
-    manuallyAdjusted: false,
-    loggedLater: false,
-    actualSaleTime: undefined,
-  },
-  {
-    id: '3',
-    productName: 'Ergonomic Keyboard',
-    quantitySold: 3,
-    saleTime: new Date('2025-05-22T16:20:00'),
-    pricePerItem: 79.99,
-    totalSaleValue: 239.97,
-    notes: 'Bulk purchase discount applied',
-    manuallyAdjusted: true,
-    loggedLater: false,
-    actualSaleTime: undefined,
-  }
-];
+// Define the column types for the sales data table
+type SaleRecord = {
+  id: string;
+  packetsSold: number;
+  piecesSold: number;
+  totalPiecesSold: number;
+  saleTime: string;
+  manuallyAdjusted: boolean;
+  loggedLater: boolean;
+  notes: string;
+  actualSaleTime: string;
+  productId: string;
+  productName: string;
+  pricePerItem: number;
+  totalSaleValue: number;
+  businessId: string;
+  businessName: string;
+};
 
 const salesColumns = [
   {
     key: "productName",
     header: "Product",
-    cell: (row: typeof mockSales[0]) => <span className="font-medium">{row.productName}</span>,
+    cell: (row: SaleRecord) => <span className="font-medium">{row.productName}</span>,
   },
   {
-    key: "quantitySold",
-    header: "Quantity",
-    cell: (row: typeof mockSales[0]) => <span>{row.quantitySold}</span>,
+    key: "packetsSold",
+    header: "Packets",
+    cell: (row: SaleRecord) => <span>{row.packetsSold}</span>,
+  },
+  {
+    key: "piecesSold",
+    header: "Pieces",
+    cell: (row: SaleRecord) => <span>{row.piecesSold}</span>,
+  },
+  {
+    key: "totalPiecesSold",
+    header: "Total Pieces",
+    cell: (row: SaleRecord) => <span>{row.totalPiecesSold}</span>,
   },
   {
     key: "saleTime",
     header: "Sale Time",
-    cell: (row: typeof mockSales[0]) => <span>{format(row.saleTime, 'PPp')}</span>,
+    cell: (row: SaleRecord) => <span>{format(new Date(row.saleTime), 'PPp')}</span>,
   },
   {
     key: "actualSaleTime",
     header: "Actual Sale Time",
-    cell: (row: typeof mockSales[0]) => 
+    cell: (row: SaleRecord) => 
       row.loggedLater && row.actualSaleTime ? 
-        <span>{format(row.actualSaleTime, 'PPp')}</span> : 
+        <span>{format(new Date(row.actualSaleTime), 'PPp')}</span> : 
         <span className="text-muted-foreground">-</span>,
   },
   {
     key: "pricePerItem",
     header: "Price Per Item",
-    cell: (row: typeof mockSales[0]) => <span>${row.pricePerItem.toFixed(2)}</span>,
+    cell: (row: SaleRecord) => <span>${row.pricePerItem.toFixed(2)}</span>,
   },
   {
     key: "totalSaleValue",
     header: "Total Value",
-    cell: (row: typeof mockSales[0]) => <span className="font-medium">${row.totalSaleValue.toFixed(2)}</span>,
+    cell: (row: SaleRecord) => <span className="font-medium">${row.totalSaleValue.toFixed(2)}</span>,
   },
   {
     key: "notes",
     header: "Notes",
-    cell: (row: typeof mockSales[0]) => 
+    cell: (row: SaleRecord) => 
       row.notes ? <span>{row.notes}</span> : <span className="text-muted-foreground">-</span>,
   },
 ];
 
 const Sales = () => {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [isAddSaleOpen, setIsAddSaleOpen] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { items: sales, isLoading, error, selectedDate: reduxSelectedDate, totalAmount } = useAppSelector(state => state.sales);
+  const [localDate, setLocalDate] = useState<Date>(new Date());
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filter sales based on search term
+  const filteredSales = sales.filter(sale => 
+    sale.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (sale.notes && sale.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // Handle date change
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setLocalDate(date);
+      const formattedDate = date.toISOString().split('T')[0];
+      dispatch(setReduxSelectedDate(formattedDate));
+      dispatch(fetchSalesByDate(formattedDate));
+    }
+  };
+
+  // Fetch sales data when component mounts or date changes
+  useEffect(() => {
+    const formattedDate = localDate.toISOString().split('T')[0];
+    dispatch(fetchSalesByDate(formattedDate));
+  }, [dispatch]);
 
   return (
     <MainLayout title="Sales Dashboard">
@@ -113,47 +131,85 @@ const Sales = () => {
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{format(selectedDate, 'PPP')}</span>
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>{format(localDate, 'PPP')}</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-auto p-0">
-                <CalendarComponent
+                <Calendar
                   mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
+                  selected={localDate}
+                  onSelect={handleDateChange}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>
             
-            <Dialog open={isAddSaleOpen} onOpenChange={setIsAddSaleOpen}>
-              <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Sale
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[550px]">
-                <DialogHeader>
-                  <DialogTitle>Record New Sale</DialogTitle>
-                </DialogHeader>
-                <AddSaleForm onSuccess={() => setIsAddSaleOpen(false)} />
-              </DialogContent>
-            </Dialog>
+            <Button 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/sales/add')}
+            >
+              <Plus className="h-4 w-4" />
+              Add Sale
+            </Button>
           </div>
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         
         <Card>
-          <CardHeader>
-            <CardTitle>Sales for {format(selectedDate, 'PPP')}</CardTitle>
+          <CardHeader className="flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0">
+            <div>
+              <CardTitle>Sales for {format(localDate, 'PPP')}</CardTitle>
+              <CardDescription>
+                Total sales amount: ${totalAmount.toFixed(2)}
+              </CardDescription>
+            </div>
+            <div className="w-full md:w-64">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search products or notes..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <DataTable 
-              columns={salesColumns} 
-              data={mockSales} 
-            />
+            {isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            ) : filteredSales.length > 0 ? (
+              <DataTable 
+                columns={salesColumns} 
+                data={filteredSales} 
+              />
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">No sales found for this date.</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => navigate('/sales/add')}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Sale
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

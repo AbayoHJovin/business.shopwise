@@ -63,8 +63,17 @@ export const API_ENDPOINTS = {
   EXPENSES: {
     GET_BY_DATE: `${API_BASE_URL}/api/expenses`,
     CREATE: `${API_BASE_URL}/api/expenses`,
+    CREATE_EXPENSE: `${API_BASE_URL}/api/expenses/create`,
     UPDATE: (id: string) => `${API_BASE_URL}/api/expenses/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/api/expenses/${id}`,
+  },
+  // Sales endpoints
+  SALES: {
+    GET_BY_DATE: `${API_BASE_URL}/api/sales/date`,
+    LOG_SALE: `${API_BASE_URL}/api/sales/log`,
+    CREATE: `${API_BASE_URL}/api/sales`,
+    UPDATE: (id: string) => `${API_BASE_URL}/api/sales/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/sales/${id}`,
   },
 };
 
