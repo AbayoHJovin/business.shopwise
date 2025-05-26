@@ -13,8 +13,11 @@ export const API_ENDPOINTS = {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     REGISTER: `${API_BASE_URL}/api/auth/register`,
     LOGOUT: `${API_BASE_URL}/api/auth/logout`,
-    ME: `${API_BASE_URL}/api/auth/me`,
-    PROFILE: `${API_BASE_URL}/api/users/profile`,
+    REFRESH: `${API_BASE_URL}/api/auth/refresh`,
+    CURRENT_USER: `${API_BASE_URL}/api/auth/me`,
+    ME: `${API_BASE_URL}/api/auth/me`, // Add ME property to match usage in authSlice.ts
+    FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
   },
   // Business endpoints
   BUSINESS: {
@@ -37,6 +40,15 @@ export const API_ENDPOINTS = {
     CREATE_WITH_IMAGES: `${API_BASE_URL}/api/products/with-images`,
     UPDATE: (id: string) => `${API_BASE_URL}/api/products/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/api/products/${id}`,
+  },
+  // Employees endpoints
+  EMPLOYEES: {
+    GET_ALL: `${API_BASE_URL}/api/employees/get-by-business`,
+    GET_BY_ID: (id: string) => `${API_BASE_URL}/api/employees/${id}`,
+    CREATE: `${API_BASE_URL}/api/employees`,
+    ADD: `${API_BASE_URL}/api/employees/add`,
+    UPDATE: (id: string) => `${API_BASE_URL}/api/employees/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/employees/${id}`,
   },
   // Dashboard endpoints
   DASHBOARD: {

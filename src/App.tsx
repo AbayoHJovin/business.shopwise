@@ -12,6 +12,9 @@ import NotFound from "./pages/NotFound";
 import Products from "./pages/Products";
 import ProductCreate from "./pages/ProductCreate";
 import Employees from "./pages/Employees";
+import EmployeeDetail from "./pages/EmployeeDetail";
+import EmployeeEdit from "./pages/EmployeeEdit";
+import EmployeeAdd from "./pages/EmployeeAdd";
 import Expenses from "./pages/Expenses";
 import LandingPage from "./pages/LandingPage";
 import Sales from "./pages/Sales";
@@ -51,8 +54,9 @@ const App = () => (
           <Route path="/products" element={<ReduxProtectedRoute><Products /></ReduxProtectedRoute>} />
           <Route path="/products/new" element={<ReduxProtectedRoute><ProductCreate /></ReduxProtectedRoute>} />
           <Route path="/employees" element={<ReduxProtectedRoute><Employees /></ReduxProtectedRoute>} />
-          <Route path="/employees/new" element={<ReduxProtectedRoute><NotFound /></ReduxProtectedRoute>} />
-          <Route path="/employees/edit/:id" element={<ReduxProtectedRoute><NotFound /></ReduxProtectedRoute>} />
+          <Route path="/employees/:id" element={<ReduxProtectedRoute><EmployeeDetail /></ReduxProtectedRoute>} />
+          <Route path="/employees/new" element={<ReduxProtectedRoute><EmployeeAdd /></ReduxProtectedRoute>} />
+          <Route path="/employees/edit/:id" element={<ReduxProtectedRoute><EmployeeEdit /></ReduxProtectedRoute>} />
           <Route path="/expenses" element={<ReduxProtectedRoute><Expenses /></ReduxProtectedRoute>} />
           <Route path="/sales" element={<ReduxProtectedRoute><Sales /></ReduxProtectedRoute>} />
           <Route path="/availability" element={<ReduxProtectedRoute><Availability /></ReduxProtectedRoute>} />

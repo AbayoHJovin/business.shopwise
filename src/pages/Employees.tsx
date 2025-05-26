@@ -1,98 +1,86 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Plus, 
-  Edit, 
-  Trash2, 
-  Filter,
   Users, 
   ChevronDown,
   ChevronUp,
-  SquareUser
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Link } from 'react-router-dom';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Link, useNavigate } from 'react-router-dom';
+import EmployeeCard from '@/components/employees/EmployeeCard';
+import { useAppDispatch, useAppSelector } from '@/hooks/store';
+import { fetchEmployees, Role } from '@/store/slices/employeeSlice';
+import { fetchCurrentSelectedBusiness } from '@/store/slices/businessSlice';
 
-// Mock employee data - replace with API call
-const mockEmployees = [
-  {
-    id: 1,
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    role: "Manager",
-    salary: 4500,
-    isCollaborator: true,
-    dateAdded: "2023-08-15"
-  },
-  {
-    id: 2,
-    name: "Bob Smith",
-    email: "bob@example.com",
-    role: "Cashier",
-    salary: 2800,
-    isCollaborator: false,
-    dateAdded: "2023-09-10"
-  },
-  {
-    id: 3,
-    name: "Charlie Davis",
-    email: "charlie@example.com",
-    role: "Stock Keeper",
-    salary: 3200,
-    isCollaborator: true,
-    dateAdded: "2023-07-22"
-  },
-  {
-    id: 4,
-    name: "Diana Williams",
-    email: "diana@example.com",
-    role: "Cashier",
-    salary: 2800,
-    isCollaborator: false,
-    dateAdded: "2023-10-05"
-  }
-];
-
-type Role = 'All' | 'Manager' | 'Cashier' | 'Stock Keeper';
+type RoleFilter = 'All' | Role | string;
 type CollaboratorFilter = 'All' | 'Collaborator' | 'Non-Collaborator';
 
 const Employees = () => {
   const { toast } = useToast();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [employeeToDelete, setEmployeeToDelete] = useState<any | null>(null);
-  const [roleFilter, setRoleFilter] = useState<Role>('All');
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('All');
   const [collaboratorFilter, setCollaboratorFilter] = useState<CollaboratorFilter>('All');
   const [salaryRange, setSalaryRange] = useState({ min: '', max: '' });
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
-  const handleDeleteClick = (employee: any) => {
-    setEmployeeToDelete(employee);
-    setDeleteDialogOpen(true);
-  };
+  // Get employees and business from Redux store
+  const { items: employees, isLoading, error } = useAppSelector(state => state.employees);
+  const { currentBusiness } = useAppSelector(state => state.business);
 
-  const handleDeleteConfirm = () => {
-    // Would call API to delete employee
-    toast({
-      title: "Employee removed",
-      description: `${employeeToDelete?.name} has been removed successfully.`,
-    });
-    setDeleteDialogOpen(false);
-  };
+  // Fetch employees on component mount
+  useEffect(() => {
+    // First, check if we have a selected business
+    if (!currentBusiness) {
+      // Try to fetch the current business
+      dispatch(fetchCurrentSelectedBusiness())
+        .unwrap()
+        .then(() => {
+          // After successfully fetching the business, fetch employees
+          return dispatch(fetchEmployees()).unwrap();
+        })
+        .catch((error) => {
+          // If we can't get a business, show error and redirect
+          if (error.includes('No business selected') || error.includes('select a business')) {
+            toast({
+              title: "No business selected",
+              description: "Please select a business to view employees",
+              variant: "destructive"
+            });
+            navigate('/business/select');
+          } else {
+            toast({
+              title: "Error",
+              description: error || "Failed to load employees. Please try again later.",
+              variant: "destructive"
+            });
+          }
+        });
+    } else {
+      // If we already have a business, fetch employees directly
+      dispatch(fetchEmployees())
+        .unwrap()
+        .catch((error) => {
+          toast({
+            title: "Error",
+            description: error || "Failed to load employees. Please try again later.",
+            variant: "destructive"
+          });
+        });
+    }
+  }, [dispatch, toast, navigate]);
 
-  const filteredEmployees = mockEmployees.filter(employee => {
+  const filteredEmployees = employees.filter(employee => {
     // Apply role filter
     if (roleFilter !== 'All' && employee.role !== roleFilter) {
       return false;
@@ -119,11 +107,21 @@ const Employees = () => {
   return (
     <MainLayout title="Employees">
       <div className="page-container p-4 md:p-6">
+        {/* Error Alert */}
+        {error && !error.includes('No business selected') && !error.includes('select a business') && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div className="mb-4 sm:mb-0">
             <h1 className="text-2xl font-bold tracking-tight">Employees</h1>
             <p className="text-muted-foreground">
               Manage your team <span className="font-medium">({filteredEmployees.length} total)</span>
+              {currentBusiness && <span className="ml-1">for {currentBusiness.name}</span>}
             </p>
           </div>
           <Button className="self-start sm:self-auto" asChild>
@@ -165,9 +163,11 @@ const Employees = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">All Roles</SelectItem>
-                      <SelectItem value="Manager">Manager</SelectItem>
-                      <SelectItem value="Cashier">Cashier</SelectItem>
-                      <SelectItem value="Stock Keeper">Stock Keeper</SelectItem>
+                      <SelectItem value={Role.OWNER}>Owner</SelectItem>
+                      <SelectItem value={Role.MANAGER}>Manager</SelectItem>
+                      <SelectItem value={Role.CASHIER}>Cashier</SelectItem>
+                      <SelectItem value={Role.SALES_ASSOCIATE}>Sales Associate</SelectItem>
+                      <SelectItem value={Role.INVENTORY_CLERK}>Inventory Clerk</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -214,93 +214,50 @@ const Employees = () => {
           )}
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredEmployees.map(employee => (
-            <Card key={employee.id} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-3">
-                  <div className="bg-primary/10 rounded-full p-2">
-                    <SquareUser className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{employee.name}</CardTitle>
-                    <CardDescription>{employee.email}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 text-sm">
-                    <div className="text-muted-foreground">Role:</div>
-                    <div>{employee.role}</div>
-                  </div>
-                  <div className="grid grid-cols-2 text-sm">
-                    <div className="text-muted-foreground">Salary:</div>
-                    <div>${employee.salary.toLocaleString()}</div>
-                  </div>
-                  <div className="grid grid-cols-2 text-sm">
-                    <div className="text-muted-foreground">Collaborator:</div>
-                    <div>
-                      {employee.isCollaborator ? (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                          Yes
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                          No
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="pt-2 flex justify-end gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/employees/edit/${employee.id}`}>
-                        <Edit className="h-4 w-4 mr-1" /> Edit
-                      </Link>
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => handleDeleteClick(employee)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" /> Delete
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {isLoading && employees.length === 0 ? (
+          // Initial loading state
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((_, index) => (
+              <Card key={index} className="h-[200px] animate-pulse">
+                <CardContent className="p-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2 mb-6"></div>
+                  <div className="h-3 bg-gray-200 rounded w-full mb-3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-full mb-3"></div>
+                  <div className="h-8 bg-gray-200 rounded w-full mt-6"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredEmployees.map(employee => (
+              <EmployeeCard key={employee.id} employee={employee} />
+            ))}
+          </div>
+        )}
         
-        {filteredEmployees.length === 0 && (
+        {!isLoading && filteredEmployees.length === 0 && (
           <div className="text-center p-10">
             <Users className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
             <p className="mt-2 text-xl font-semibold">No employees found</p>
             <p className="text-muted-foreground">
-              {mockEmployees.length > 0 ? "Try adjusting your filters" : "Add your first employee to get started"}
+              {employees.length > 0 ? "Try adjusting your filters" : "Add your first employee to get started"}
             </p>
           </div>
         )}
+        
+        {/* Loading indicator for pagination */}
+        {isLoading && employees.length > 0 && (
+          <div className="w-full py-8 flex justify-center items-center">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Loading employees...</p>
+            </div>
+          </div>
+        )}
 
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Employee Removal</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to remove {employeeToDelete?.name}? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteConfirm}>
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+
       </div>
     </MainLayout>
   );

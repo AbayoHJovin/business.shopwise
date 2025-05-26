@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import ProductCard from '@/components/products/ProductCard';
 import ProductTable from '@/components/products/ProductTable';
 import ProductDialog from '@/components/products/ProductDialog';
+import ProductViewModal from '@/components/products/ProductViewModal';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -71,6 +72,7 @@ const Products = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   
   // Get products and pagination state from Redux store
@@ -230,11 +232,8 @@ const Products = () => {
   };
   
   const handleViewProduct = (product: Product) => {
-    // This would navigate to a product detail page in a real app
-    toast({
-      title: "View Product",
-      description: `Viewing details for ${product.name}.`,
-    });
+    setSelectedProduct(product);
+    setViewModalOpen(true);
   };
 
   const sortedProducts = useMemo(() => {
@@ -453,6 +452,13 @@ const Products = () => {
           product={selectedProduct}
           open={dialogOpen}
           onOpenChange={setDialogOpen}
+        />
+        
+        {/* Product View Modal */}
+        <ProductViewModal
+          product={selectedProduct}
+          open={viewModalOpen}
+          onOpenChange={setViewModalOpen}
         />
       </div>
     </MainLayout>
