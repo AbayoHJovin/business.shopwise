@@ -11,7 +11,7 @@ const AboutSection = () => {
             A better way to manage your business
           </p>
           <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-            BusinessHive provides a comprehensive solution for small to medium-sized businesses 
+            ShopWise provides a comprehensive solution for small to medium-sized businesses 
             to manage their operations efficiently.
           </p>
         </div>

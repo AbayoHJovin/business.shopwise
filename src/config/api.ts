@@ -19,6 +19,11 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
     RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
   },
+  // Password management endpoints
+  PASSWORD: {
+    FORGOT: `${API_BASE_URL}/api/password/forgot`,
+    RESET: `${API_BASE_URL}/api/password/reset`,
+  },
   // Business endpoints
   BUSINESS: {
     LIST: `${API_BASE_URL}/api/businesses`,
@@ -53,6 +58,13 @@ export const API_ENDPOINTS = {
   // Dashboard endpoints
   DASHBOARD: {
     GET: `${API_BASE_URL}/api/dashboard`,
+  },
+  // Expenses endpoints
+  EXPENSES: {
+    GET_BY_DATE: `${API_BASE_URL}/api/expenses`,
+    CREATE: `${API_BASE_URL}/api/expenses`,
+    UPDATE: (id: string) => `${API_BASE_URL}/api/expenses/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/expenses/${id}`,
   },
 };
 

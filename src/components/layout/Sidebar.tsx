@@ -97,7 +97,7 @@ const Sidebar = () => {
       >
         <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
           {!isCollapsed && (
-            <h1 className="font-bold text-lg text-sidebar-foreground">BusinessHive</h1>
+            <h1 className="font-bold text-lg text-sidebar-foreground">ShopWise</h1>
           )}
           <Button 
             variant="ghost"

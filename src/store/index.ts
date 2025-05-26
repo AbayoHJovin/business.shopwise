@@ -5,6 +5,7 @@ import dailyLogsReducer from '@/store/slices/dailyLogsSlice';
 import dashboardReducer from '@/store/slices/dashboardSlice';
 import productReducer from '@/store/slices/productSlice';
 import employeeReducer from '@/store/slices/employeeSlice';
+import expenseReducer from '@/store/slices/expenseSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     products: productReducer,
     employees: employeeReducer,
+    expenses: expenseReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

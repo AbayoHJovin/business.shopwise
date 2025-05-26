@@ -9,7 +9,7 @@ const HowItWorksSection = () => {
             Simple steps to streamline your business
           </p>
           <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-            Get started with BusinessHive in just a few simple steps and transform how you manage your business.
+            Get started with ShopWise in just a few simple steps and transform how you manage your business.
           </p>
         </div>
 
@@ -24,7 +24,7 @@ const HowItWorksSection = () => {
               <div className="md:w-1/2 mt-4 md:mt-0">
                 <h3 className="text-2xl font-bold text-gray-900">Create Your Account</h3>
                 <p className="mt-2 text-lg text-gray-500">
-                  Sign up for a BusinessHive account and set up your business profile with basic information 
+                  Sign up for a ShopWise account and set up your business profile with basic information 
                   about your company.
                 </p>
               </div>

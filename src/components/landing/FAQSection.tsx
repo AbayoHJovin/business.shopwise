@@ -8,24 +8,24 @@ import {
 
 const faqs = [
   {
-    question: "What is BusinessHive?",
-    answer: "BusinessHive is a comprehensive business management platform designed to help small and medium-sized businesses manage their operations more efficiently. It includes features for product management, employee management, expense tracking, and sales analytics."
+    question: "What is ShopWise?",
+    answer: "ShopWise is a comprehensive business management platform designed to help small and medium-sized businesses manage their operations more efficiently. It includes features for product management, employee management, expense tracking, and sales analytics."
   },
   {
-    question: "How do I get started with BusinessHive?",
+    question: "How do I get started with ShopWise?",
     answer: "Getting started is easy! Simply click the 'Get Started' button, create an account, and follow the guided setup process to configure your business profile. You can then begin adding products, employees, and tracking expenses right away."
   },
   {
-    question: "Can I try BusinessHive before subscribing?",
-    answer: "Yes, we offer a 14-day free trial for all our subscription plans. This allows you to explore all the features and decide if BusinessHive is the right fit for your business before committing to a subscription."
+    question: "Can I try ShopWise before subscribing?",
+    answer: "Yes, we offer a 14-day free trial for all our subscription plans. This allows you to explore all the features and decide if ShopWise is the right fit for your business before committing to a subscription."
   },
   {
-    question: "Is my data secure with BusinessHive?",
-    answer: "Absolutely. We take data security very seriously. BusinessHive uses industry-standard encryption to protect your data, and we never share your information with third parties without your explicit consent."
+    question: "Is my data secure with ShopWise?",
+    answer: "Absolutely. We take data security very seriously. ShopWise uses industry-standard encryption to protect your data, and we never share your information with third parties without your explicit consent."
   },
   {
-    question: "Can I access BusinessHive on my mobile device?",
-    answer: "Yes, BusinessHive is fully responsive and works on all devices including smartphones and tablets. This allows you to manage your business on the go."
+    question: "Can I access ShopWise on my mobile device?",
+    answer: "Yes, ShopWise is fully responsive and works on all devices including smartphones and tablets. This allows you to manage your business on the go."
   },
   {
     question: "How do I get support if I encounter issues?",
@@ -43,7 +43,7 @@ const FAQSection = () => {
             Frequently Asked Questions
           </p>
           <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-            Find answers to common questions about BusinessHive.
+            Find answers to common questions about ShopWise.
           </p>
         </div>
 

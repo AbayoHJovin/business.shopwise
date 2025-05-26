@@ -7,7 +7,7 @@ const FooterSection = () => {
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-1">
-            <Link to="/" className="text-2xl font-bold">BusinessHive</Link>
+            <Link to="/" className="text-2xl font-bold">ShopWise</Link>
             <p className="mt-2 text-sm text-gray-300">
               Streamline your business operations with our comprehensive management platform.
             </p>
@@ -79,7 +79,7 @@ const FooterSection = () => {
         
         <div className="mt-12 pt-8 border-t border-gray-700">
           <p className="text-base text-gray-400 text-center">
-            &copy; {new Date().getFullYear()} BusinessHive. All rights reserved.
+            &copy; {new Date().getFullYear()} ShopWise. All rights reserved.
           </p>
         </div>
       </div>

@@ -142,7 +142,7 @@ const SignUp = () => {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <Link to="/" className="text-3xl font-bold text-primary">BusinessHive</Link>
+            <Link to="/" className="text-3xl font-bold text-primary">ShopWise</Link>
             <div className="w-9"></div> {/* Empty div for alignment */}
           </div>
           <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>

@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { API_ENDPOINTS, DEFAULT_REQUEST_OPTIONS } from "@/config/api";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Define the form schema with validation
 const forgotPasswordSchema = z.object({
@@ -17,9 +19,16 @@ const forgotPasswordSchema = z.object({
 
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
+// Define the request type for forgot password
+interface ForgotPasswordRequest {
+  email: string;
+}
+
 const ForgotPassword = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Initialize form with react-hook-form and zod validation
   const form = useForm<ForgotPasswordFormValues>({
@@ -30,18 +39,47 @@ const ForgotPassword = () => {
   });
 
   // Handle form submission
-  const onSubmit = (values: ForgotPasswordFormValues) => {
-    // In a real application, you would send this data to your backend
-    console.log(values);
+  const onSubmit = async (values: ForgotPasswordFormValues) => {
+    setIsLoading(true);
+    setError(null);
     
-    // Show success message
-    toast.success("Reset link sent!", {
-      description: "Check your email for password reset instructions",
-    });
-    
-    // Update state to show success message
-    setSubmittedEmail(values.email);
-    setIsSubmitted(true);
+    try {
+      // Prepare the request payload
+      const payload: ForgotPasswordRequest = {
+        email: values.email,
+      };
+      
+      // Send the request to the backend API
+      const response = await fetch(API_ENDPOINTS.PASSWORD.FORGOT, {
+        ...DEFAULT_REQUEST_OPTIONS,
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        // Handle error response
+        throw new Error(data.error || 'Failed to process forgot password request');
+      }
+      
+      // Show success message
+      toast.success("Reset link sent!", {
+        description: "Check your email for password reset instructions",
+      });
+      
+      // Update state to show success message
+      setSubmittedEmail(values.email);
+      setIsSubmitted(true);
+    } catch (err: any) {
+      // Handle error
+      setError(err.message || 'An unexpected error occurred');
+      toast.error("Failed to send reset link", {
+        description: err.message || 'Please try again later',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,7 +87,7 @@ const ForgotPassword = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <Link to="/" className="text-3xl font-bold text-primary">BusinessHive</Link>
+            <Link to="/" className="text-3xl font-bold text-primary">ShopWise</Link>
           </div>
           <CardTitle className="text-2xl font-bold text-center">
             {isSubmitted ? "Check your email" : "Forgot your password?"}
@@ -61,6 +99,13 @@ const ForgotPassword = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           {isSubmitted ? (
             <div className="text-center space-y-4">
               <div className="flex justify-center">
@@ -94,15 +139,32 @@ const ForgotPassword = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="Your email" {...field} />
+                        <Input 
+                          type="email" 
+                          placeholder="Your email" 
+                          {...field} 
+                          disabled={isLoading}
+                          className="focus:ring-2 focus:ring-primary/20"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 
-                <Button type="submit" className="w-full">
-                  Send Reset Link
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Reset Link"
+                  )}
                 </Button>
               </form>
             </Form>

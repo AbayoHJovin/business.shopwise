@@ -23,6 +23,7 @@ import Settings from "./pages/Settings";
 import SignUp from "./pages/auth/SignUp";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import SignupTest from "./components/auth/SignupTest";
 import BusinessSelection from "./pages/business/BusinessSelection";
 import BusinessCreate from "./pages/business/BusinessCreate";
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/test-signup" element={<SignupTest />} />
           
           {/* Business Routes - Protected */}
