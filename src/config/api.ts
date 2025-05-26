@@ -30,6 +30,7 @@ export const API_ENDPOINTS = {
     USER_BUSINESSES: `${API_BASE_URL}/api/businesses/user`,
     GET_MINE: `${API_BASE_URL}/api/business/getMine`,
     GET_SELECTED: `${API_BASE_URL}/api/business/selected`,
+    GET_BY_ID: `${API_BASE_URL}/api/business/get-by-id`,
     CREATE: `${API_BASE_URL}/api/business/create`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
     UPDATE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,

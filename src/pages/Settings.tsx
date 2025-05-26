@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import MyBusinessesTab from '@/components/settings/MyBusinessesTab';
+import BusinessProfileTab from '@/components/settings/BusinessProfileTab';
 import { useAppSelector } from '@/store/hooks';
 
 // Types for settings
@@ -110,6 +111,7 @@ const Settings = () => {
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="data">Data Display</TabsTrigger>
             {isAuthenticated && <TabsTrigger value="businesses">My Businesses</TabsTrigger>}
+            {isAuthenticated && <TabsTrigger value="profile">Business Profile</TabsTrigger>}
           </TabsList>
           
           <TabsContent value="appearance">
@@ -279,6 +281,12 @@ const Settings = () => {
           {isAuthenticated && (
             <TabsContent value="businesses">
               <MyBusinessesTab />
+            </TabsContent>
+          )}
+          
+          {isAuthenticated && (
+            <TabsContent value="profile">
+              <BusinessProfileTab />
             </TabsContent>
           )}
         </Tabs>
