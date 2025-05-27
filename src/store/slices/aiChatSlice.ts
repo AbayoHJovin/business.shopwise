@@ -6,9 +6,11 @@ import { RootState } from '@/store';
 export interface Message {
   id: string;
   content: string;
-  isUser: boolean;
+  type: 'user' | 'ai';
   timestamp: string;
-  status: 'sending' | 'sent' | 'error';
+  status?: 'sending' | 'sent' | 'error';
+  sequenceOrder?: number;
+  modelUsed?: string;
 }
 
 export interface ConversationListItem {
@@ -19,11 +21,12 @@ export interface ConversationListItem {
 }
 
 export interface Conversation {
-  id: string;
+  conversationId: string;
   title: string;
   messages: Message[];
   createdAt: string;
   updatedAt: string;
+  status?: string;
 }
 
 interface AiChatState {
@@ -52,14 +55,20 @@ export const sendMessage = createAsyncThunk<
   any,
   { message: string; conversationId?: string },
   { state: RootState }
->('aiChat/sendMessage', async ({ message, conversationId }, { rejectWithValue, dispatch }) => {
+>('aiChat/sendMessage', async ({ message, conversationId }, { rejectWithValue, dispatch, getState }) => {
+  // Get the selected conversation ID from state if available
+  const state = getState();
+  const selectedId = state.aiChat.selectedConversationId;
+  
+  // Use the selected ID if no conversationId was provided
+  const finalConversationId = conversationId || selectedId;
   try {
     const response = await fetch(API_ENDPOINTS.AI.CHAT, {
       method: 'POST',
       ...DEFAULT_REQUEST_OPTIONS,
       body: JSON.stringify({ 
         message, 
-        conversationId 
+        conversationId: finalConversationId 
       }),
     });
 
@@ -134,23 +143,24 @@ const aiChatSlice = createSlice({
       if (!state.currentConversation) {
         // Create a new conversation if none exists
         const newConversation: Conversation = {
-          id: `temp-${Date.now()}`,
+          conversationId: `temp-${Date.now()}`,
           title: action.payload.content.substring(0, 30) + (action.payload.content.length > 30 ? '...' : ''),
           messages: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          status: 'ACTIVE'
         };
         state.currentConversation = newConversation;
-        state.conversations.unshift(newConversation);
       }
 
       // Add user message to current conversation
       const userMessage: Message = {
         id: `user-${Date.now()}`,
         content: action.payload.content,
-        isUser: true,
+        type: 'user',
         timestamp: new Date().toISOString(),
         status: 'sending',
+        sequenceOrder: state.currentConversation.messages.filter(m => m.type === 'user').length + 1
       };
 
       state.currentConversation.messages.push(userMessage);
@@ -176,19 +186,17 @@ const aiChatSlice = createSlice({
         if (!state.currentConversation) return;
         
         // Update conversation ID if this was a new conversation
-        if (state.currentConversation.id.startsWith('temp-')) {
-          state.currentConversation.id = action.payload.conversationId;
+        if (state.currentConversation.conversationId.startsWith('temp-')) {
+          state.currentConversation.conversationId = action.payload.conversationId;
+          state.selectedConversationId = action.payload.conversationId;
           
-          // Update in conversations array too
-          const index = state.conversations.findIndex(c => c.id === state.currentConversation?.id);
-          if (index !== -1) {
-            state.conversations[index].id = action.payload.conversationId;
-          }
+          // Fetch the conversations sidebar to update the list
+          // This will be handled by the component after seeing the updated ID
         }
         
         // Update status of the last user message
         const lastUserMessageIndex = state.currentConversation.messages.findIndex(
-          m => m.isUser && m.status === 'sending'
+          m => m.type === 'user' && m.status === 'sending'
         );
         
         if (lastUserMessageIndex !== -1) {
@@ -200,9 +208,11 @@ const aiChatSlice = createSlice({
         const aiMessage: Message = {
           id: action.payload.responseId,
           content: action.payload.content,
-          isUser: false,
+          type: 'ai',
           timestamp: action.payload.timestamp,
           status: 'sent',
+          modelUsed: action.payload.modelUsed,
+          sequenceOrder: state.currentConversation.messages.filter(m => m.type === 'ai').length + 1
         };
         
         state.currentConversation.messages.push(aiMessage);
@@ -215,7 +225,7 @@ const aiChatSlice = createSlice({
         if (state.currentConversation) {
           // Update status of the last user message
           const lastUserMessageIndex = state.currentConversation.messages.findIndex(
-            m => m.isUser && m.status === 'sending'
+            m => m.type === 'user' && m.status === 'sending'
           );
           
           if (lastUserMessageIndex !== -1) {
@@ -245,8 +255,27 @@ const aiChatSlice = createSlice({
       })
       .addCase(fetchConversation.fulfilled, (state, action) => {
         state.isLoadingConversation = false;
-        state.currentConversation = action.payload;
-        state.selectedConversationId = action.payload.id;
+        
+        // Map the backend response to our frontend model
+        const conversation: Conversation = {
+          conversationId: action.payload.conversationId,
+          title: action.payload.title,
+          messages: action.payload.messages.map(msg => ({
+            id: msg.id,
+            content: msg.content,
+            type: msg.type,
+            timestamp: msg.timestamp,
+            sequenceOrder: msg.sequenceOrder,
+            modelUsed: msg.modelUsed,
+            status: 'sent'
+          })),
+          createdAt: action.payload.createdAt,
+          updatedAt: action.payload.updatedAt,
+          status: action.payload.status
+        };
+        
+        state.currentConversation = conversation;
+        state.selectedConversationId = action.payload.conversationId;
       })
       .addCase(fetchConversation.rejected, (state, action) => {
         state.isLoadingConversation = false;

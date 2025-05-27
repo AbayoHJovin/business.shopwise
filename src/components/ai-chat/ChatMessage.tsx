@@ -10,25 +10,24 @@ interface ChatMessageProps {
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = memo(({ message }) => {
-  const isError = message.status === 'error';
-  const isLoading = message.status === 'sending';
+  const { type, content, timestamp, status, modelUsed } = message;
+  const isLoading = status === 'sending';
+  const isError = status === 'error';
   
   return (
     <div 
       className={cn(
         "flex w-full gap-3 p-4",
-        message.isUser ? "bg-background" : "bg-muted/30",
+        type === 'user' ? "bg-background" : "bg-muted/30",
         isError && "bg-destructive/10"
       )}
     >
       {/* Avatar */}
       <Avatar className="h-8 w-8">
-        {message.isUser ? (
-          <>
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              <User className="h-4 w-4" />
-            </AvatarFallback>
-          </>
+        {type === 'user' ? (
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            <User className="h-4 w-4" />
+          </AvatarFallback>
         ) : (
           <>
             <AvatarImage src="/ai-avatar.png" alt="AI" />
@@ -43,10 +42,13 @@ const ChatMessage: React.FC<ChatMessageProps> = memo(({ message }) => {
       <div className="flex-1 space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">
-            {message.isUser ? 'You' : 'AI Assistant'}
+            {type === 'user' ? 'You' : 'AI Assistant'}
           </span>
+          {modelUsed && type === 'ai' && (
+            <span className="text-xs text-muted-foreground ml-2">{modelUsed}</span>
+          )}
           <span className="text-xs text-muted-foreground">
-            {new Date(message.timestamp).toLocaleTimeString()}
+            {new Date(timestamp).toLocaleTimeString()}
           </span>
           {isError && (
             <span className="text-xs text-destructive flex items-center gap-1">
@@ -58,18 +60,18 @@ const ChatMessage: React.FC<ChatMessageProps> = memo(({ message }) => {
         
         {isLoading ? (
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <div className="flex space-x-1">
-                <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: '0ms' }}></div>
-                <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: '150ms' }}></div>
-                <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: '300ms' }}></div>
+            {status === 'sending' && type === 'user' && (
+              <div className="flex items-center space-x-1">
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: '0ms' }}></div>
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: '150ms' }}></div>
+                <div className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: '300ms' }}></div>
               </div>
-            </div>
+            )}
           </div>
         ) : (
           <div className="prose prose-sm max-w-none dark:prose-invert">
             <ReactMarkdown>
-              {message.content}
+              {content}
             </ReactMarkdown>
           </div>
         )}

@@ -28,6 +28,14 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = memo(({ classNam
     dispatch(fetchConversation(conversationId));
   }, [dispatch, selectedConversationId]);
   
+  // Refresh conversations list when a new conversation is created
+  useEffect(() => {
+    // If we have a selected conversation ID that's not in our list, refresh the list
+    if (selectedConversationId && !conversations.some(c => c.id === selectedConversationId)) {
+      dispatch(fetchConversationsSidebar());
+    }
+  }, [selectedConversationId, conversations, dispatch]);
+  
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -75,7 +83,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = memo(({ classNam
                   selectedConversationId === conversation.id && "border-l-4 border-primary"
                 )}
                 onClick={() => handleSelectConversation(conversation.id)}
-                disabled={isLoadingConversation || conversation.id.startsWith('temp-')}
+                disabled={isLoadingConversation || (conversation.id && conversation.id.startsWith('temp-'))}
               >
                 <div className="flex items-start gap-2 w-full overflow-hidden">
                   <MessageSquare className="h-4 w-4 shrink-0 mt-1" />

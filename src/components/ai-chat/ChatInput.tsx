@@ -7,14 +7,15 @@ import { addUserMessage, sendMessage } from '@/store/slices/aiChatSlice';
 
 interface ChatInputProps {
   disabled?: boolean;
+  conversationId?: string;
 }
 
-const ChatInput: React.FC<ChatInputProps> = memo(({ disabled = false }) => {
+const ChatInput: React.FC<ChatInputProps> = memo(({ disabled, conversationId }) => {
+  const dispatch = useAppDispatch();
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const dispatch = useAppDispatch();
-  const { isLoading, currentConversation } = useAppSelector(state => state.aiChat);
-  
+  const { isSendingMessage, currentConversation } = useAppSelector(state => state.aiChat);
+
   // Auto-resize textarea based on content
   useEffect(() => {
     if (textareaRef.current) {
@@ -22,11 +23,29 @@ const ChatInput: React.FC<ChatInputProps> = memo(({ disabled = false }) => {
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
     }
   }, [message]);
-  
+
+  const handleSendMessage = useCallback(() => {
+    if (!message.trim()) return;
+
+    // Only send conversationId if it's provided and not a temp ID
+    const payload = {
+      message: message.trim(),
+      ...(conversationId && !conversationId.startsWith('temp-') ? { conversationId } : {})
+    };
+
+    dispatch(sendMessage(payload));
+    setMessage('');
+
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+  }, [message, dispatch, conversationId]);
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!message.trim() || disabled || isLoading) return;
+
+    if (!message.trim() || disabled || isSendingMessage) return;
     
     // Add user message to the UI immediately
     dispatch(addUserMessage({ content: message.trim() }));
@@ -35,11 +54,11 @@ const ChatInput: React.FC<ChatInputProps> = memo(({ disabled = false }) => {
     setMessage('');
     
     // Send message to API
-    dispatch(sendMessage({ 
-      message: message.trim(),
-      conversationId: currentConversation?.id?.startsWith('temp-') ? undefined : currentConversation?.id
-    }));
-  }, [message, disabled, isLoading, dispatch, currentConversation]);
+    const payload = currentConversation && !currentConversation.conversationId.startsWith('temp-')
+      ? { message: message.trim(), conversationId: currentConversation.conversationId }
+      : { message: message.trim() };
+    dispatch(sendMessage(payload));
+  }, [message, disabled, dispatch, currentConversation]);
   
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -57,13 +76,13 @@ const ChatInput: React.FC<ChatInputProps> = memo(({ disabled = false }) => {
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
-          className="min-h-[40px] max-h-[150px] resize-none"
-          disabled={disabled || isLoading}
+          className="min-h-10 w-full resize-none bg-background px-3 py-2 focus-visible:outline-none"
+          disabled={disabled || isSendingMessage}
         />
         <Button 
           type="submit" 
           size="icon" 
-          disabled={!message.trim() || disabled || isLoading}
+          disabled={!message.trim() || disabled || isSendingMessage}
           className="shrink-0"
         >
           <SendIcon className="h-4 w-4" />

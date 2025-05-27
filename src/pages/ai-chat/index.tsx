@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, Suspense, lazy } from 'react';
+import React, { useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, MessageSquare, Plus, Bot } from 'lucide-react';
@@ -33,12 +33,17 @@ const AiChat = () => {
     }
   }, [currentConversation?.messages]);
   
-  // Clear error when component unmounts
-  useEffect(() => {
-    return () => {
-      dispatch(clearError());
-    };
+  // Handle error dismissal
+  const handleDismissError = useCallback(() => {
+    dispatch(clearError());
   }, [dispatch]);
+  
+  // Function to get the current conversation ID for sending messages
+  const getCurrentConversationId = useCallback(() => {
+    if (!currentConversation) return undefined;
+    // Don't send temp IDs to the backend
+    return currentConversation.conversationId.startsWith('temp-') ? undefined : currentConversation.conversationId;
+  }, [currentConversation]);
   
   // Close sidebar on mobile when window resizes
   useEffect(() => {
@@ -49,12 +54,20 @@ const AiChat = () => {
     }
   }, [isMobile]);
   
-  const handleNewChat = () => {
+  // Handle new chat button click
+  const handleNewChat = useCallback(() => {
     dispatch(clearCurrentConversation());
-    if (isMobile) {
-      setSidebarOpen(false);
+  }, [dispatch]);
+  
+  // Effect to refresh conversations when a new conversation is created
+  useEffect(() => {
+    if (currentConversation?.conversationId && 
+        !currentConversation.conversationId.startsWith('temp-') && 
+        currentConversation.messages.length > 0) {
+      // If we have a valid conversation ID and it's not a temp ID, refresh the sidebar
+      dispatch(fetchConversationsSidebar());
     }
-  };
+  }, [currentConversation?.conversationId, dispatch]);
   
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -173,7 +186,10 @@ const AiChat = () => {
             
             {/* Chat Input */}
             <Suspense fallback={<div className="p-4 border-t"><Skeleton className="h-10 w-full" /></div>}>
-              <ChatInput disabled={(isLoadingConversation || isSendingMessage) && !currentConversation} />
+              <ChatInput 
+                disabled={(isLoadingConversation || isSendingMessage) && !currentConversation} 
+                conversationId={currentConversation?.conversationId}
+              />
             </Suspense>
           </div>
         </div>
