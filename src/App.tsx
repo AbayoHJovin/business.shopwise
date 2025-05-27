@@ -30,6 +30,7 @@ import SignupTest from "./components/auth/SignupTest";
 import BusinessSelection from "./pages/business/BusinessSelection";
 import BusinessCreate from "./pages/business/BusinessCreate";
 import DailyLogs from "./pages/DailyLogs";
+import UpdateBusiness from "./pages/settings/UpdateBusiness";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
           {/* Availability route removed */}
           <Route path="/daily-logs" element={<ReduxProtectedRoute><DailyLogs /></ReduxProtectedRoute>} />
           <Route path="/settings" element={<ReduxProtectedRoute><Settings /></ReduxProtectedRoute>} />
+          <Route path="/settings/business/update" element={<ReduxProtectedRoute><UpdateBusiness /></ReduxProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         </ReduxAuthProvider>

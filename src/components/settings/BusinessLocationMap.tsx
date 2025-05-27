@@ -18,7 +18,6 @@ const BusinessLocationMap: React.FC<BusinessLocationMapProps> = ({
   onLocationSelect
 }) => {
   useEffect(() => {
-    // Fix for default marker icon in Leaflet
     delete L.Icon.Default.prototype._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MapPin, Globe, Building2, Users, Package, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import 'leaflet/dist/leaflet.css';
 
 const BusinessProfileTab = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { 
     name, 
     location, 
@@ -178,7 +180,11 @@ const BusinessProfileTab = () => {
         )}
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-4 border-t pt-6">
-        <Button variant="outline" className="w-full sm:w-auto flex items-center justify-center">
+        <Button 
+          variant="outline" 
+          className="w-full sm:w-auto flex items-center justify-center"
+          onClick={() => navigate('/settings/business/update')}
+        >
           <Pencil className="h-4 w-4 mr-2" />
           Update Business
         </Button>

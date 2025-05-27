@@ -26,15 +26,15 @@ export const API_ENDPOINTS = {
   },
   // Business endpoints
   BUSINESS: {
-    LIST: `${API_BASE_URL}/api/businesses`,
-    USER_BUSINESSES: `${API_BASE_URL}/api/businesses/user`,
+    LIST: `${API_BASE_URL}/api/business`,
+    USER_BUSINESSES: `${API_BASE_URL}/api/business/user`,
     GET_MINE: `${API_BASE_URL}/api/business/getMine`,
     GET_SELECTED: `${API_BASE_URL}/api/business/selected`,
     GET_BY_ID: `${API_BASE_URL}/api/business/get-by-id`,
     CREATE: `${API_BASE_URL}/api/business/create`,
-    DETAIL: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
-    UPDATE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
-    DELETE: (id: string) => `${API_BASE_URL}/api/businesses/${id}`,
+    DETAIL: (id: string) => `${API_BASE_URL}/api/business/${id}`,
+    UPDATE: `${API_BASE_URL}/api/business/update`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/business/${id}`,
     SELECT: (id: string) => `${API_BASE_URL}/api/business/select/${id}`,
     AVAILABILITY: {
       GET: `${API_BASE_URL}/api/business/availability`,

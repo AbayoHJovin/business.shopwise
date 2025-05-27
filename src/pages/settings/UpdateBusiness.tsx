@@ -296,7 +296,15 @@ const UpdateBusiness = () => {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-end mt-6">
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => navigate('/settings')}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
             <Button 
               type="submit" 
               disabled={isLoading}

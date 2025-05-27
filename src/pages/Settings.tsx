@@ -25,6 +25,7 @@ type UserSettings = {
   tableDensity: TableDensityType;
   autoSaveEnabled: boolean;
   defaultSortOrder: 'asc' | 'desc';
+  activeTab?: 'appearance' | 'dashboard' | 'data' | 'businesses' | 'profile';
 };
 
 const Settings = () => {
@@ -38,6 +39,7 @@ const Settings = () => {
     tableDensity: 'default',
     autoSaveEnabled: true,
     defaultSortOrder: 'asc',
+    activeTab: 'appearance',
   });
 
   // Load settings from localStorage on initial render
@@ -105,7 +107,7 @@ const Settings = () => {
           </p>
         </div>
         
-        <Tabs defaultValue="appearance" className="w-full">
+        <Tabs value={settings.activeTab || 'appearance'} onValueChange={(value: typeof settings.activeTab) => updateSetting('activeTab', value)} className="w-full">
           {/* For larger screens */}
           <TabsList className="mb-4 hidden md:flex w-full justify-start space-x-2">
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
@@ -117,11 +119,7 @@ const Settings = () => {
           
           {/* For mobile screens */}
           <div className="mb-4 md:hidden">
-            <Select defaultValue="appearance" onValueChange={(value) => {
-              const tabsElement = document.querySelector('[role="tablist"]');
-              const button = tabsElement?.querySelector(`[value="${value}"]`) as HTMLButtonElement;
-              button?.click();
-            }}>
+            <Select value={settings.activeTab || 'appearance'} onValueChange={(value: typeof settings.activeTab) => updateSetting('activeTab', value)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select tab" />
               </SelectTrigger>

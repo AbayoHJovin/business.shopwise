@@ -87,7 +87,7 @@ const updateBusiness = createAsyncThunk<
 >('businessProfile/update', async (updateData, { rejectWithValue, getState }) => {
   try {
     const state = await getState();
-    const response = await fetch(API_ENDPOINTS.BUSINESS.UPDATE(state.businessProfile.id!), {
+    const response = await fetch(API_ENDPOINTS.BUSINESS.UPDATE, {
       ...DEFAULT_REQUEST_OPTIONS,
       method: 'PATCH',
       body: JSON.stringify(updateData),
