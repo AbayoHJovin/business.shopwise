@@ -32,6 +32,7 @@ import BusinessCreate from "./pages/business/BusinessCreate";
 import DailyLogs from "./pages/DailyLogs";
 import UpdateBusiness from "./pages/settings/UpdateBusiness";
 import Products from "./pages/Products";
+import AiChat from "./pages/ai-chat";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
           <Route path="/sales/add" element={<ReduxProtectedRoute><SaleAdd /></ReduxProtectedRoute>} />
           {/* Availability route removed */}
           <Route path="/daily-logs" element={<ReduxProtectedRoute><DailyLogs /></ReduxProtectedRoute>} />
+          <Route path="/ai-chat" element={<ReduxProtectedRoute><AiChat /></ReduxProtectedRoute>} />
           <Route path="/settings" element={<ReduxProtectedRoute><Settings /></ReduxProtectedRoute>} />
           <Route path="/settings/business/update" element={<ReduxProtectedRoute><UpdateBusiness /></ReduxProtectedRoute>} />
           <Route path="*" element={<NotFound />} />

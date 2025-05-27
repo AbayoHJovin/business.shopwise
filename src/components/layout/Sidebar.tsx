@@ -12,7 +12,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  FileText
+  FileText,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -116,6 +117,7 @@ const Sidebar = () => {
           <NavItem icon={ClipboardList} label="Expenses" href="/expenses" isCollapsed={isCollapsed} />
           <NavItem icon={BarChart} label="Sales" href="/sales" isCollapsed={isCollapsed} />
           <NavItem icon={FileText} label="Daily Logs" href="/daily-logs" isCollapsed={isCollapsed} />
+          <NavItem icon={MessageSquare} label="AI Chat" href="/ai-chat" isCollapsed={isCollapsed} />
           <NavItem icon={Settings} label="Settings" href="/settings" isCollapsed={isCollapsed} />
         </nav>
 

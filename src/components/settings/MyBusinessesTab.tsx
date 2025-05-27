@@ -72,7 +72,12 @@ const MyBusinessesTab = () => {
                       {business.location && (
                         <p className="text-sm text-muted-foreground flex items-center mt-1">
                           <MapPin className="h-3.5 w-3.5 mr-1" />
-                          {business.location.address || `Lat: ${business.location.latitude}, Long: ${business.location.longitude}`}
+                          {business.location.formattedLocation || 
+                            [business.location.village, business.location.cell, business.location.sector, business.location.district, business.location.province]
+                              .filter(Boolean)
+                              .join(', ') || 
+                            `Lat: ${business.location.latitude}, Long: ${business.location.longitude}`
+                          }
                         </p>
                       )}
                     </div>
@@ -88,18 +93,18 @@ const MyBusinessesTab = () => {
                   </div>
                   
                   <p className="text-sm text-gray-600 mt-3 line-clamp-2">
-                    {business.description || 'No description provided.'}
+                    {business.about || 'No description provided.'}
                   </p>
                   
-                  {business.website && (
+                  {business.websiteLink && (
                     <a 
-                      href={business.website} 
+                      href={business.websiteLink} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-sm text-primary flex items-center hover:underline mt-2"
                     >
                       <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                      {business.website}
+                      {business.websiteLink}
                     </a>
                   )}
                 </div>

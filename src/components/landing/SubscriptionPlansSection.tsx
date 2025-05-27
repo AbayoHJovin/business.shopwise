@@ -5,53 +5,61 @@ import { Link } from "react-router-dom";
 
 const plans = [
   {
-    name: "Starter",
-    price: "$9.99",
-    frequency: "per month",
-    description: "Perfect for small businesses just getting started",
+    name: "Basic",
+    price: "Free",
+    frequency: "",
+    description: "Essential tools for small businesses to get started",
     features: [
       "Up to 50 products",
-      "Up to 5 employees",
+      "Up to 3 employees",
+      "Basic inventory management",
+      "Simple sales tracking",
       "Basic expense tracking",
       "Daily sales reports",
+      "Standard dashboard views",
       "Email support"
     ],
-    ctaText: "Start Free Trial",
+    ctaText: "Get Started",
     popular: false
   },
   {
-    name: "Professional",
-    price: "$24.99",
-    frequency: "per month",
-    description: "Ideal for growing businesses with more needs",
+    name: "Weekly Premium",
+    price: "2000 RWF",
+    frequency: "per week",
+    description: "Advanced features for growing businesses",
     features: [
-      "Up to 500 products",
-      "Up to 20 employees",
-      "Advanced expense tracking",
+      "Up to 200 products",
+      "Up to 10 employees",
+      "Advanced inventory management",
       "Detailed sales analytics",
-      "Employee time tracking",
+      "Advanced expense tracking",
+      "AI-powered business insights",
+      "Business listing in shop directory",
+      "Advanced dashboard filtering",
       "Priority email support",
       "Availability management"
     ],
-    ctaText: "Start Free Trial",
+    ctaText: "Get Started",
     popular: true
   },
   {
-    name: "Enterprise",
-    price: "$49.99",
+    name: "Monthly Premium",
+    price: "6000 RWF",
     frequency: "per month",
-    description: "For established businesses with complex requirements",
+    description: "Best value for established businesses",
     features: [
-      "Unlimited products",
-      "Unlimited employees",
-      "Advanced expense categories",
-      "Custom reports & analytics",
-      "API access",
-      "Multiple business locations",
-      "Priority phone support",
-      "Dedicated account manager"
+      "Up to 200 products",
+      "Up to 10 employees",
+      "Advanced inventory management",
+      "Detailed sales analytics",
+      "Advanced expense tracking",
+      "AI-powered business insights",
+      "Business listing in shop directory",
+      "Advanced dashboard filtering",
+      "Priority email support",
+      "Availability management"
     ],
-    ctaText: "Contact Sales",
+    ctaText: "Get Started",
     popular: false
   }
 ];
@@ -66,7 +74,7 @@ const SubscriptionPlansSection = () => {
             Choose the right plan for your business
           </p>
           <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-            We offer flexible plans to accommodate businesses of all sizes. Start with a 14-day free trial.
+            From free basic tools to premium features with AI analytics and business directory listings. Premium plans include a 7-day free trial.
           </p>
         </div>
 

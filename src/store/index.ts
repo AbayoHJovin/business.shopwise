@@ -10,6 +10,7 @@ import salesReducer from '@/store/slices/salesSlice';
 import dailySummariesReducer from '@/store/slices/dailySummariesSlice';
 import businessAvailabilityReducer from '@/store/slices/businessAvailabilitySlice';
 import businessProfileReducer from '@/store/slices/businessProfileSlice';
+import aiChatReducer from '@/store/slices/aiChatSlice';
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     dailySummaries: dailySummariesReducer,
     businessAvailability: businessAvailabilityReducer,
     businessProfile: businessProfileReducer,
+    aiChat: aiChatReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
