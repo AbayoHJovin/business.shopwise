@@ -208,6 +208,10 @@ const Products = () => {
     }
   }, [error, toast, navigate]);
 
+  const handleEdit = (product: Product) => {
+    navigate(`/products/edit/${product.id}`);
+  };
+
   const handleDeleteConfirm = (productId: number | string) => {
     // Would call API to delete product
     const productToDelete = products.find(p => p.id === productId);
@@ -396,8 +400,8 @@ const Products = () => {
                   <ProductCard 
                     key={product.id}
                     product={product}
-                    onEdit={() => handleEditProduct(product)}
-                    onDelete={() => handleDeleteConfirm(product.id)}
+                    onEdit={() => handleEdit(product)}
+                    onDelete={handleDeleteConfirm}
                   />
                 ))}
               </div>
@@ -406,7 +410,7 @@ const Products = () => {
                 <CardContent className="p-0">
                   <ProductTable 
                     products={sortedProducts}
-                    onEdit={handleEditProduct}
+                    onEdit={handleEdit}
                     onDelete={handleDeleteConfirm}
                     onView={handleViewProduct}
                   />

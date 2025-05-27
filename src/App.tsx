@@ -8,8 +8,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ReduxAuthProvider from "./components/auth/ReduxAuthProvider";
 import ReduxProtectedRoute from "./components/auth/ReduxProtectedRoute";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Products from "./pages/Products";
+import NotFound from '@/pages/NotFound';
+import UpdateProduct from '@/pages/products/UpdateProduct';
 import ProductCreate from "./pages/ProductCreate";
 import Employees from "./pages/Employees";
 import EmployeeDetail from "./pages/EmployeeDetail";
@@ -31,6 +31,7 @@ import BusinessSelection from "./pages/business/BusinessSelection";
 import BusinessCreate from "./pages/business/BusinessCreate";
 import DailyLogs from "./pages/DailyLogs";
 import UpdateBusiness from "./pages/settings/UpdateBusiness";
+import Products from "./pages/Products";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
           <Route path="/dashboard" element={<ReduxProtectedRoute><Index /></ReduxProtectedRoute>} />
           <Route path="/products" element={<ReduxProtectedRoute><Products /></ReduxProtectedRoute>} />
           <Route path="/products/new" element={<ReduxProtectedRoute><ProductCreate /></ReduxProtectedRoute>} />
+          <Route path="/products/edit/:productId" element={<ReduxProtectedRoute><UpdateProduct /></ReduxProtectedRoute>} />
           <Route path="/employees" element={<ReduxProtectedRoute><Employees /></ReduxProtectedRoute>} />
           <Route path="/employees/:id" element={<ReduxProtectedRoute><EmployeeDetail /></ReduxProtectedRoute>} />
           <Route path="/employees/new" element={<ReduxProtectedRoute><EmployeeAdd /></ReduxProtectedRoute>} />

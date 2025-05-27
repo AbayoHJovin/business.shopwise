@@ -8,6 +8,11 @@ export const API_BASE_URL = 'http://localhost:5000'; // Backend running on port 
 
 // API endpoints
 export const API_ENDPOINTS = {
+  PRODUCTS: {
+    GET_PRODUCT: (productId: string) => `${API_BASE_URL}/api/products/${productId}`,
+    UPDATE_PRODUCT: (productId: string) => `${API_BASE_URL}/api/products/${productId}`,
+    GET_BUSINESS_PRODUCTS: (businessId: string) => `${API_BASE_URL}/api/products/business/${businessId}`,
+  },
   // Auth endpoints
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
