@@ -230,7 +230,6 @@ export const createProductWithImages = createAsyncThunk<
         method: 'POST',
         credentials: 'include',
         body: formData
-        // Note: Don't set Content-Type header, browser will set it with boundary
       });
       
       // Handle response

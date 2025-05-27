@@ -25,6 +25,10 @@ export const API_ENDPOINTS = {
     RESET: `${API_BASE_URL}/api/password/reset`,
   },
   // Business endpoints
+  PRODUCT_IMAGES: {
+    UPLOAD_MULTIPLE: (productId: string) => `${API_BASE_URL}/api/product-images/upload/product/${productId}/multiple`,
+    GET_PRODUCT_IMAGES: (productId: string) => `${API_BASE_URL}/api/product-images/product/${productId}`,
+  },
   BUSINESS: {
     LIST: `${API_BASE_URL}/api/business`,
     USER_BUSINESSES: `${API_BASE_URL}/api/business/user`,
