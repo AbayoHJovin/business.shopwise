@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, Suspense, lazy } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, MessageSquare, Plus } from 'lucide-react';
+import { AlertCircle, MessageSquare, Plus, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { clearCurrentConversation, clearError, fetchConversations } from '@/store/slices/aiChatSlice';
+import { clearCurrentConversation, clearError, fetchConversationsSidebar } from '@/store/slices/aiChatSlice';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
@@ -16,15 +16,15 @@ const ConversationSidebar = lazy(() => import('@/components/ai-chat/Conversation
 
 const AiChat = () => {
   const dispatch = useAppDispatch();
-  const { currentConversation, isLoading, error } = useAppSelector(state => state.aiChat);
+  const { 
+    currentConversation, 
+    isLoadingConversation,
+    isSendingMessage,
+    error 
+  } = useAppSelector(state => state.aiChat);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [sidebarOpen, setSidebarOpen] = React.useState(!isMobile);
-  
-  // Fetch conversations on mount
-  useEffect(() => {
-    dispatch(fetchConversations());
-  }, [dispatch]);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -79,7 +79,7 @@ const AiChat = () => {
             variant="outline" 
             size="sm" 
             onClick={handleNewChat}
-            disabled={isLoading}
+            disabled={isLoadingConversation || isSendingMessage}
           >
             <Plus className="h-4 w-4 mr-2" />
             New Chat
@@ -120,7 +120,19 @@ const AiChat = () => {
             
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto">
-              {!currentConversation || currentConversation.messages.length === 0 ? (
+              {isLoadingConversation ? (
+                <div className="flex flex-col space-y-4 p-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-3">
+                      <div className="h-8 w-8 rounded-full bg-muted/60 animate-pulse" />
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 w-24 bg-muted/60 animate-pulse rounded" />
+                        <div className="h-16 bg-muted/60 animate-pulse rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : !currentConversation || currentConversation.messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-6">
                   <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium">Start a new conversation</h3>
@@ -134,6 +146,25 @@ const AiChat = () => {
                     {currentConversation.messages.map((message) => (
                       <ChatMessage key={message.id} message={message} />
                     ))}
+                    {isSendingMessage && (
+                      <div className="flex w-full gap-3 p-4 bg-muted/30">
+                        <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
+                          <Bot className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">AI Assistant</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex space-x-1">
+                              <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: '0ms' }}></div>
+                              <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: '150ms' }}></div>
+                              <div className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/50" style={{ animationDelay: '300ms' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div ref={messagesEndRef} />
                   </Suspense>
                 </>
@@ -142,7 +173,7 @@ const AiChat = () => {
             
             {/* Chat Input */}
             <Suspense fallback={<div className="p-4 border-t"><Skeleton className="h-10 w-full" /></div>}>
-              <ChatInput disabled={isLoading && !currentConversation} />
+              <ChatInput disabled={(isLoadingConversation || isSendingMessage) && !currentConversation} />
             </Suspense>
           </div>
         </div>

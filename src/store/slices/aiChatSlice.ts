@@ -11,17 +11,28 @@ export interface Message {
   status: 'sending' | 'sent' | 'error';
 }
 
+export interface ConversationListItem {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Conversation {
   id: string;
   title: string;
   messages: Message[];
+  createdAt: string;
   updatedAt: string;
 }
 
 interface AiChatState {
-  conversations: Conversation[];
+  conversations: ConversationListItem[];
   currentConversation: Conversation | null;
-  isLoading: boolean;
+  isLoadingConversation: boolean;
+  isLoadingSidebar: boolean;
+  isSendingMessage: boolean;
+  selectedConversationId: string | null;
   error: string | null;
 }
 
@@ -29,7 +40,10 @@ interface AiChatState {
 const initialState: AiChatState = {
   conversations: [],
   currentConversation: null,
-  isLoading: false,
+  isLoadingConversation: false,
+  isLoadingSidebar: false,
+  isSendingMessage: false,
+  selectedConversationId: null,
   error: null,
 };
 
@@ -38,7 +52,7 @@ export const sendMessage = createAsyncThunk<
   any,
   { message: string; conversationId?: string },
   { state: RootState }
->('aiChat/sendMessage', async ({ message, conversationId }, { rejectWithValue }) => {
+>('aiChat/sendMessage', async ({ message, conversationId }, { rejectWithValue, dispatch }) => {
   try {
     const response = await fetch(API_ENDPOINTS.AI.CHAT, {
       method: 'POST',
@@ -61,13 +75,13 @@ export const sendMessage = createAsyncThunk<
   }
 });
 
-export const fetchConversations = createAsyncThunk<
-  Conversation[],
+export const fetchConversationsSidebar = createAsyncThunk<
+  ConversationListItem[],
   void,
   { state: RootState }
->('aiChat/fetchConversations', async (_, { rejectWithValue }) => {
+>('aiChat/fetchConversationsSidebar', async (_, { rejectWithValue }) => {
   try {
-    const response = await fetch(API_ENDPOINTS.AI.GET_CONVERSATIONS, {
+    const response = await fetch(API_ENDPOINTS.AI.GET_CONVERSATIONS_SIDEBAR, {
       method: 'GET',
       ...DEFAULT_REQUEST_OPTIONS,
     });
@@ -88,7 +102,8 @@ export const fetchConversation = createAsyncThunk<
   Conversation,
   string,
   { state: RootState }
->('aiChat/fetchConversation', async (conversationId, { rejectWithValue }) => {
+>('aiChat/fetchConversation', async (conversationId, { rejectWithValue, dispatch }) => {
+  dispatch(setSelectedConversationId(conversationId));
   try {
     const response = await fetch(API_ENDPOINTS.AI.GET_CONVERSATION(conversationId), {
       method: 'GET',
@@ -112,6 +127,9 @@ const aiChatSlice = createSlice({
   name: 'aiChat',
   initialState,
   reducers: {
+    setSelectedConversationId: (state, action: PayloadAction<string | null>) => {
+      state.selectedConversationId = action.payload;
+    },
     addUserMessage: (state, action: PayloadAction<{ content: string }>) => {
       if (!state.currentConversation) {
         // Create a new conversation if none exists
@@ -119,6 +137,7 @@ const aiChatSlice = createSlice({
           id: `temp-${Date.now()}`,
           title: action.payload.content.substring(0, 30) + (action.payload.content.length > 30 ? '...' : ''),
           messages: [],
+          createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
         state.currentConversation = newConversation;
@@ -148,11 +167,11 @@ const aiChatSlice = createSlice({
     builder
       // Send message
       .addCase(sendMessage.pending, (state) => {
-        state.isLoading = true;
+        state.isSendingMessage = true;
         state.error = null;
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isSendingMessage = false;
         
         if (!state.currentConversation) return;
         
@@ -190,7 +209,7 @@ const aiChatSlice = createSlice({
         state.currentConversation.updatedAt = new Date().toISOString();
       })
       .addCase(sendMessage.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isSendingMessage = false;
         state.error = action.payload as string || 'Failed to send message';
         
         if (state.currentConversation) {
@@ -205,43 +224,36 @@ const aiChatSlice = createSlice({
         }
       })
       
-      // Fetch conversations
-      .addCase(fetchConversations.pending, (state) => {
-        state.isLoading = true;
+      // Fetch conversations sidebar
+      .addCase(fetchConversationsSidebar.pending, (state) => {
+        state.isLoadingSidebar = true;
         state.error = null;
       })
-      .addCase(fetchConversations.fulfilled, (state, action) => {
-        state.isLoading = false;
+      .addCase(fetchConversationsSidebar.fulfilled, (state, action) => {
+        state.isLoadingSidebar = false;
         state.conversations = action.payload;
       })
-      .addCase(fetchConversations.rejected, (state, action) => {
-        state.isLoading = false;
+      .addCase(fetchConversationsSidebar.rejected, (state, action) => {
+        state.isLoadingSidebar = false;
         state.error = action.payload as string || 'Failed to fetch conversations';
       })
       
       // Fetch conversation
       .addCase(fetchConversation.pending, (state) => {
-        state.isLoading = true;
+        state.isLoadingConversation = true;
         state.error = null;
       })
       .addCase(fetchConversation.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingConversation = false;
         state.currentConversation = action.payload;
-        
-        // Update in conversations array if it exists
-        const index = state.conversations.findIndex(c => c.id === action.payload.id);
-        if (index !== -1) {
-          state.conversations[index] = action.payload;
-        } else {
-          state.conversations.unshift(action.payload);
-        }
+        state.selectedConversationId = action.payload.id;
       })
       .addCase(fetchConversation.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isLoadingConversation = false;
         state.error = action.payload as string || 'Failed to fetch conversation';
       });
   },
 });
 
-export const { addUserMessage, clearCurrentConversation, clearError } = aiChatSlice.actions;
+export const { addUserMessage, clearCurrentConversation, clearError, setSelectedConversationId } = aiChatSlice.actions;
 export default aiChatSlice.reducer;

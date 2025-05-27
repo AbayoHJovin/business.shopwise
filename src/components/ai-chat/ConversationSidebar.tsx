@@ -1,9 +1,9 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Plus, Trash2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { clearCurrentConversation, fetchConversation, Conversation } from '@/store/slices/aiChatSlice';
+import { clearCurrentConversation, fetchConversation, fetchConversationsSidebar, ConversationListItem } from '@/store/slices/aiChatSlice';
 import { cn } from '@/lib/utils';
 
 interface ConversationSidebarProps {
@@ -12,18 +12,23 @@ interface ConversationSidebarProps {
 
 const ConversationSidebar: React.FC<ConversationSidebarProps> = memo(({ className }) => {
   const dispatch = useAppDispatch();
-  const { conversations, currentConversation, isLoading } = useAppSelector(state => state.aiChat);
+  const { conversations, selectedConversationId, isLoadingSidebar, isLoadingConversation } = useAppSelector(state => state.aiChat);
   
+  // Fetch conversations on mount
+  useEffect(() => {
+    dispatch(fetchConversationsSidebar());
+  }, [dispatch]);
+
   const handleNewChat = useCallback(() => {
     dispatch(clearCurrentConversation());
   }, [dispatch]);
   
   const handleSelectConversation = useCallback((conversationId: string) => {
-    if (currentConversation?.id === conversationId) return;
+    if (selectedConversationId === conversationId) return;
     dispatch(fetchConversation(conversationId));
-  }, [dispatch, currentConversation]);
+  }, [dispatch, selectedConversationId]);
   
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -31,7 +36,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = memo(({ classNam
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
+  }, []);
   
   return (
     <div className={cn("flex flex-col h-full border-r", className)}>
@@ -39,7 +44,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = memo(({ classNam
         <Button 
           onClick={handleNewChat} 
           className="w-full" 
-          disabled={isLoading}
+          disabled={isLoadingSidebar || isLoadingConversation}
         >
           <Plus className="h-4 w-4 mr-2" />
           New Chat
@@ -48,7 +53,14 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = memo(({ classNam
       
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-2">
-          {conversations.length === 0 ? (
+          {isLoadingSidebar ? (
+            // Loading skeleton
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="w-full h-14 bg-muted/40 animate-pulse rounded-md"></div>
+              ))}
+            </div>
+          ) : conversations.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p className="text-sm">No conversations yet</p>
             </div>
@@ -56,13 +68,14 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = memo(({ classNam
             conversations.map((conversation) => (
               <Button
                 key={conversation.id}
-                variant={currentConversation?.id === conversation.id ? "secondary" : "ghost"}
+                variant={selectedConversationId === conversation.id ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start text-left h-auto py-3 px-3",
-                  currentConversation?.id === conversation.id && "bg-secondary"
+                  selectedConversationId === conversation.id && "bg-secondary",
+                  selectedConversationId === conversation.id && "border-l-4 border-primary"
                 )}
                 onClick={() => handleSelectConversation(conversation.id)}
-                disabled={isLoading || conversation.id.startsWith('temp-')}
+                disabled={isLoadingConversation || conversation.id.startsWith('temp-')}
               >
                 <div className="flex items-start gap-2 w-full overflow-hidden">
                   <MessageSquare className="h-4 w-4 shrink-0 mt-1" />
