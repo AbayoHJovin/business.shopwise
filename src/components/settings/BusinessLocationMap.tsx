@@ -7,13 +7,15 @@ interface BusinessLocationMapProps {
   longitude: number;
   name: string;
   address: string;
+  onLocationSelect?: (lat: number, lng: number) => void;
 }
 
 const BusinessLocationMap: React.FC<BusinessLocationMapProps> = ({ 
   latitude, 
   longitude, 
   name, 
-  address 
+  address,
+  onLocationSelect
 }) => {
   useEffect(() => {
     // Fix for default marker icon in Leaflet
@@ -34,16 +36,26 @@ const BusinessLocationMap: React.FC<BusinessLocationMapProps> = ({
     // Initialize map
     const map = L.map(mapContainer).setView([latitude, longitude], 13);
 
-    // Add tile layer (OpenStreetMap)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    // Add satellite tile layer (Esri World Imagery)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; <a href="https://www.esri.com">Esri</a>, Maxar, Earthstar Geographics, and the GIS User Community',
+      maxZoom: 19
     }).addTo(map);
 
     // Add marker with popup
-    L.marker([latitude, longitude])
+    const marker = L.marker([latitude, longitude])
       .addTo(map)
       .bindPopup(`<strong>${name}</strong><br>${address}`)
       .openPopup();
+
+    // Add click handler if onLocationSelect is provided
+    if (onLocationSelect) {
+      map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        marker.setLatLng([lat, lng]);
+        onLocationSelect(lat, lng);
+      });
+    }
 
     // Cleanup function
     return () => {

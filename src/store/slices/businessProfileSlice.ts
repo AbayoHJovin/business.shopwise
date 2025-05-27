@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '../index';
 import { API_ENDPOINTS, DEFAULT_REQUEST_OPTIONS } from '@/config/api';
 
@@ -74,6 +74,46 @@ export const getBusinessProfile = createAsyncThunk<
   }
 });
 
+// Update business profile
+const updateBusiness = createAsyncThunk<
+  BusinessProfileState,
+  {
+    name: string;
+    location: LocationDto;
+    about: string;
+    websiteLink: string;
+  },
+  { state: RootState }
+>('businessProfile/update', async (updateData, { rejectWithValue, getState }) => {
+  try {
+    const state = await getState();
+    const response = await fetch(API_ENDPOINTS.BUSINESS.UPDATE(state.businessProfile.id!), {
+      ...DEFAULT_REQUEST_OPTIONS,
+      method: 'PATCH',
+      body: JSON.stringify(updateData),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      let errorMessage = 'Failed to update business profile';
+      
+      if (data.error) {
+        errorMessage = data.error;
+      } else if (data.message) {
+        errorMessage = data.message;
+      }
+      
+      return rejectWithValue(errorMessage);
+    }
+    
+    return data;
+  } catch (error: any) {
+    console.error('Error updating business profile:', error);
+    return rejectWithValue(error.message || 'Failed to update business profile');
+  }
+});
+
 const businessProfileSlice = createSlice({
   name: 'businessProfile',
   initialState,
@@ -103,9 +143,30 @@ const businessProfileSlice = createSlice({
       .addCase(getBusinessProfile.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      // Handle updateBusiness
+      .addCase(updateBusiness.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateBusiness.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.id = action.payload.id;
+        state.name = action.payload.name;
+        state.location = action.payload.location;
+        state.about = action.payload.about;
+        state.websiteLink = action.payload.websiteLink;
+        state.collaboratorIds = action.payload.collaboratorIds;
+        state.productCount = action.payload.productCount;
+        state.employeeCount = action.payload.employeeCount;
+      })
+      .addCase(updateBusiness.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
-  }
+  },
 });
 
 export const { clearBusinessProfileError } = businessProfileSlice.actions;
+export { updateBusiness };
 export default businessProfileSlice.reducer;

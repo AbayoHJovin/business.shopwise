@@ -105,14 +105,35 @@ const Settings = () => {
           </p>
         </div>
         
-        <Tabs defaultValue="appearance">
-          <TabsList className="mb-4">
+        <Tabs defaultValue="appearance" className="w-full">
+          {/* For larger screens */}
+          <TabsList className="mb-4 hidden md:flex w-full justify-start space-x-2">
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="data">Data Display</TabsTrigger>
             {isAuthenticated && <TabsTrigger value="businesses">My Businesses</TabsTrigger>}
             {isAuthenticated && <TabsTrigger value="profile">Business Profile</TabsTrigger>}
           </TabsList>
+          
+          {/* For mobile screens */}
+          <div className="mb-4 md:hidden">
+            <Select defaultValue="appearance" onValueChange={(value) => {
+              const tabsElement = document.querySelector('[role="tablist"]');
+              const button = tabsElement?.querySelector(`[value="${value}"]`) as HTMLButtonElement;
+              button?.click();
+            }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select tab" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="appearance">Appearance</SelectItem>
+                <SelectItem value="dashboard">Dashboard</SelectItem>
+                <SelectItem value="data">Data Display</SelectItem>
+                {isAuthenticated && <SelectItem value="businesses">My Businesses</SelectItem>}
+                {isAuthenticated && <SelectItem value="profile">Business Profile</SelectItem>}
+              </SelectContent>
+            </Select>
+          </div>
           
           <TabsContent value="appearance">
             <Card>
@@ -285,29 +306,24 @@ const Settings = () => {
           )}
           
           {isAuthenticated && (
-            <TabsContent value="profile">
+            <TabsContent value="profile" className="space-y-4">
               <BusinessProfileTab />
+              <div className="flex flex-col sm:flex-row gap-4 justify-end mt-6">
+                <Button variant="destructive" className="w-full sm:w-auto" onClick={resetSettings}>
+                  Reset to Defaults
+                </Button>
+                <Button className="w-full sm:w-auto" onClick={() => {
+                  toast({
+                    title: "Changes saved",
+                    description: "Your settings have been updated successfully.",
+                  });
+                }}>
+                  Save Changes
+                </Button>
+              </div>
             </TabsContent>
           )}
         </Tabs>
-        
-        <div className="mt-6 text-right">
-          <Button 
-            variant="outline" 
-            onClick={resetSettings} 
-            className="mr-2"
-          >
-            Reset to Defaults
-          </Button>
-          <Button 
-            onClick={() => toast({
-              title: "Settings saved",
-              description: "Your preferences have been saved successfully.",
-            })}
-          >
-            Save Changes
-          </Button>
-        </div>
       </div>
     </MainLayout>
   );

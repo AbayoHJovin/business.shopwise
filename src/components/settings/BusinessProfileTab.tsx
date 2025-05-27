@@ -121,8 +121,8 @@ const BusinessProfileTab = () => {
                     rel="noopener noreferrer"
                     className="text-sm text-primary flex items-center hover:underline"
                   >
-                    <Globe className="h-3.5 w-3.5 mr-1" />
-                    {websiteLink}
+                    <Globe className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                    <span className="truncate">{websiteLink}</span>
                   </a>
                 </div>
               )}
@@ -177,12 +177,12 @@ const BusinessProfileTab = () => {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-end space-x-2 border-t pt-6">
-        <Button variant="outline" className="flex items-center">
+      <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-4 border-t pt-6">
+        <Button variant="outline" className="w-full sm:w-auto flex items-center justify-center">
           <Pencil className="h-4 w-4 mr-2" />
           Update Business
         </Button>
-        <Button variant="destructive" className="flex items-center">
+        <Button variant="destructive" className="w-full sm:w-auto flex items-center justify-center">
           <Trash2 className="h-4 w-4 mr-2" />
           Delete Business
         </Button>
