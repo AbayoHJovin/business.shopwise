@@ -7,13 +7,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { getBusinessProfile } from '@/store/slices/businessProfileSlice';
+import { getBusinessProfile, deleteBusiness } from '@/store/slices/businessProfileSlice';
 import BusinessLocationMap from './BusinessLocationMap';
+import DeleteBusinessDialog from './DeleteBusinessDialog';
 import 'leaflet/dist/leaflet.css';
+import { toast } from 'sonner';
 
 const BusinessProfileTab = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { 
     name, 
     location, 
@@ -188,10 +191,30 @@ const BusinessProfileTab = () => {
           <Pencil className="h-4 w-4 mr-2" />
           Update Business
         </Button>
-        <Button variant="destructive" className="w-full sm:w-auto flex items-center justify-center">
+        <Button 
+          variant="destructive" 
+          className="w-full sm:w-auto flex items-center justify-center"
+          onClick={() => setIsDeleteDialogOpen(true)}
+        >
           <Trash2 className="h-4 w-4 mr-2" />
           Delete Business
         </Button>
+
+        <DeleteBusinessDialog
+          businessName={name || ''}
+          isOpen={isDeleteDialogOpen}
+          isLoading={isLoading}
+          error={error}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={async (password, confirmationText) => {
+            const result = await dispatch(deleteBusiness({ password, confirmationText }));
+            if (deleteBusiness.fulfilled.match(result)) {
+              toast.success('Business deleted successfully');
+              navigate('/business/select');
+              setIsDeleteDialogOpen(false);
+            }
+          }}
+        />
       </CardFooter>
     </Card>
   );

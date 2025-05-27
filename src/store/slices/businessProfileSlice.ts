@@ -114,6 +114,40 @@ const updateBusiness = createAsyncThunk<
   }
 });
 
+// Delete business thunk
+export const deleteBusiness = createAsyncThunk<
+  string,
+  { password: string; confirmationText: string },
+  { rejectValue: string }
+>('businessProfile/delete', async ({ password, confirmationText }, { rejectWithValue }) => {
+  try {
+    const response = await fetch(API_ENDPOINTS.BUSINESS.DELETE, {
+      ...DEFAULT_REQUEST_OPTIONS,
+      method: 'DELETE',
+      body: JSON.stringify({ password, confirmationText }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      let errorMessage = 'Failed to delete business';
+      
+      if (data.error) {
+        errorMessage = data.error;
+      } else if (data.message) {
+        errorMessage = data.message;
+      }
+      
+      return rejectWithValue(errorMessage);
+    }
+    
+    return data.message;
+  } catch (error: any) {
+    console.error('Error deleting business:', error);
+    return rejectWithValue(error.message || 'Failed to delete business');
+  }
+});
+
 const businessProfileSlice = createSlice({
   name: 'businessProfile',
   initialState,
@@ -123,6 +157,27 @@ const businessProfileSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
+    // Delete business
+    builder.addCase(deleteBusiness.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    });
+    builder.addCase(deleteBusiness.fulfilled, (state) => {
+      state.isLoading = false;
+      state.error = null;
+      // Clear business data after successful deletion
+      state.name = null;
+      state.location = null;
+      state.about = null;
+      state.websiteLink = null;
+      state.productCount = 0;
+      state.employeeCount = 0;
+    });
+    builder.addCase(deleteBusiness.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload || 'Failed to delete business';
+    });
+
     builder
       // Handle getBusinessProfile
       .addCase(getBusinessProfile.pending, (state) => {

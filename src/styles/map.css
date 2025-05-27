@@ -1,0 +1,8 @@
+.leaflet-container {
+  z-index: 0 !important;
+}
+
+/* Ensure other map controls stay above the map but below dialogs */
+.leaflet-control-container {
+  z-index: 1 !important;
+}

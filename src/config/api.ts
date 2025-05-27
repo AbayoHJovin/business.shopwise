@@ -34,7 +34,7 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/business/create`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/business/${id}`,
     UPDATE: `${API_BASE_URL}/api/business/update`,
-    DELETE: (id: string) => `${API_BASE_URL}/api/business/${id}`,
+    DELETE: `${API_BASE_URL}/api/business/delete`,
     SELECT: (id: string) => `${API_BASE_URL}/api/business/select/${id}`,
     AVAILABILITY: {
       GET: `${API_BASE_URL}/api/business/availability`,
