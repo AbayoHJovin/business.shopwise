@@ -17,8 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAppDispatch, useAppSelector } from '@/hooks/store';
-import { fetchEmployeeById, Role } from '@/store/slices/employeeSlice';
-import { API_BASE_URL, DEFAULT_REQUEST_OPTIONS } from '@/config/api';
+import { fetchEmployeeById, updateEmployee, Role, EmployeeUpdateRequest } from '@/store/slices/employeeSlice';
 import { Separator } from '@/components/ui/separator';
 
 interface EmployeeFormData {
@@ -120,38 +119,38 @@ const EmployeeEdit = () => {
       }
 
       // Prepare data for API
-      const payload = {
-        ...formData,
-        id: selectedEmployee?.id,
-        businessId: selectedEmployee?.businessId
+      const updateData: EmployeeUpdateRequest = {
+        name: formData.name,
+        email: formData.email,
+        salary: formData.salary,
+        role: formData.role,
+        isDisabled: formData.isDisabled,
+        isCollaborator: formData.isCollaborator
       };
 
-      // Make API call to update employee
-      const response = await fetch(`${API_BASE_URL}/api/employees/${id}`, {
-        ...DEFAULT_REQUEST_OPTIONS,
-        method: 'PUT',
-        body: JSON.stringify(payload)
-      });
+      // Dispatch the updateEmployee action
+      if (id) {
+        await dispatch(updateEmployee({ id, data: updateData }))
+          .unwrap()
+          .then((updatedEmployee) => {
+            // Show success message
+            toast({
+              title: "Employee updated",
+              description: `${updatedEmployee.name} has been updated successfully.`
+            });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update employee');
+            // Navigate back to employee details
+            navigate(`/employees/${id}`);
+          })
+          .catch((error) => {
+            throw new Error(error || 'Failed to update employee');
+          });
       }
-
-      // Show success message
-      toast({
-        title: "Employee updated",
-        description: `${formData.name} has been updated successfully.`
-      });
-
-      // Navigate back to employee details
-      navigate(`/employees/${id}`);
     } catch (error: any) {
       setFormError(error.message || 'Failed to update employee. Please try again.');
       toast({
         title: "Error",
-        description: error.message || 'Failed to update employee. Please try again.',
+        description: error.message || "Failed to update employee. Please try again.",
         variant: "destructive"
       });
     } finally {
