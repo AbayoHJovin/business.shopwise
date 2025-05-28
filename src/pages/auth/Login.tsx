@@ -32,6 +32,9 @@ const Login = () => {
   // Get the previous location from state or default to home
   const from = location.state?.from?.pathname || "/";
   
+  // Check if there's a selected subscription plan in localStorage
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  
   // Effect to handle Redux errors
   useEffect(() => {
     if (reduxError) {
@@ -39,6 +42,14 @@ const Login = () => {
       setIsSubmitting(false);
     }
   }, [reduxError]);
+  
+  // Effect to check for selected subscription plan in localStorage
+  useEffect(() => {
+    const storedPlan = localStorage.getItem("selectedSubscriptionPlan");
+    if (storedPlan) {
+      setSelectedPlan(storedPlan);
+    }
+  }, []);
   
   // Initialize form with react-hook-form and zod validation
   const form = useForm<LoginFormValues>({
@@ -61,15 +72,29 @@ const Login = () => {
       
       if (result.success) {
         // Show success message
-        setSuccessMessage("Login successful! Redirecting to your businesses...");
+        const redirectDescription = selectedPlan 
+          ? "Redirecting to payment page..." 
+          : "Redirecting to your businesses...";
+        
+        setSuccessMessage(`Login successful! ${redirectDescription}`);
         toast.success("Login successful!", {
           description: "Welcome back!",
         });
         
-        // Redirect to business selection page
-        setTimeout(() => {
-          navigate("/business/select");
-        }, 1500);
+        // If there's a selected plan, redirect to payment page
+        if (selectedPlan) {
+          setTimeout(() => {
+            // Clear the stored plan from localStorage
+            localStorage.removeItem("selectedSubscriptionPlan");
+            // Navigate to the payment page with the plan type
+            navigate(`/payment/${selectedPlan}`);
+          }, 1500);
+        } else {
+          // Otherwise, redirect to business selection page
+          setTimeout(() => {
+            navigate("/business/select");
+          }, 1500);
+        }
       } else {
         // Display the specific error message from the backend
         setApiError(result.error || "Invalid email or password");

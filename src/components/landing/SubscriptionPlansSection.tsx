@@ -1,9 +1,24 @@
 
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAppSelector } from "@/hooks/store";
+import { useState } from "react";
 
-const plans = [
+export type SubscriptionType = "basic" | "weekly" | "monthly";
+
+export interface SubscriptionPlan {
+  name: string;
+  price: string;
+  frequency: string;
+  description: string;
+  features: string[];
+  ctaText: string;
+  popular: boolean;
+  type: SubscriptionType;
+}
+
+const plans: SubscriptionPlan[] = [
   {
     name: "Basic",
     price: "Free",
@@ -20,7 +35,8 @@ const plans = [
       "Email support"
     ],
     ctaText: "Get Started",
-    popular: false
+    popular: false,
+    type: "basic"
   },
   {
     name: "Weekly Premium",
@@ -40,11 +56,12 @@ const plans = [
       "Availability management"
     ],
     ctaText: "Get Started",
-    popular: true
+    popular: true,
+    type: "weekly"
   },
   {
     name: "Monthly Premium",
-    price: "8500 RWF",
+    price: "9000 RWF",
     frequency: "per month",
     description: "Best value for established businesses",
     features: [
@@ -60,11 +77,28 @@ const plans = [
       "Availability management"
     ],
     ctaText: "Get Started",
-    popular: false
+    popular: false,
+    type: "monthly"
   }
 ];
 
 const SubscriptionPlansSection = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAppSelector(state => state.auth);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionType | null>(null);
+  
+  const handleGetStarted = (plan: SubscriptionPlan) => {
+    if (plan.type === "basic") {
+      navigate("/dashboard");
+    } else {
+      if (isAuthenticated) {
+        navigate(`/payment/${plan.type}`);
+      } else {
+        localStorage.setItem("selectedSubscriptionPlan", plan.type);
+        navigate("/login");
+      }
+    }
+  };
   return (
     <section className="py-12 bg-gray-50" id="plans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,7 +108,7 @@ const SubscriptionPlansSection = () => {
             Choose the right plan for your business
           </p>
           <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-            From free basic tools to premium features with AI analytics and business directory listings. Premium plans include a 7-day free trial.
+            From free basic tools to premium features with AI analytics and business directory listings. Premium plans include a 14-day free trial.
           </p>
         </div>
 
@@ -113,14 +147,13 @@ const SubscriptionPlansSection = () => {
                   ))}
                 </ul>
                 <div className="mt-8">
-                  <Link to="/dashboard">
-                    <Button 
-                      className={`w-full ${!plan.popular ? 'bg-primary hover:bg-primary/90' : ''}`}
-                      variant={plan.popular ? 'default' : 'outline'}
-                    >
-                      {plan.ctaText}
-                    </Button>
-                  </Link>
+                  <Button 
+                    className={`w-full ${!plan.popular ? 'bg-primary hover:bg-primary/90' : ''}`}
+                    variant={plan.popular ? 'default' : 'outline'}
+                    onClick={() => handleGetStarted(plan)}
+                  >
+                    {plan.ctaText}
+                  </Button>
                 </div>
               </div>
             </div>

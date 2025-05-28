@@ -34,6 +34,7 @@ import DailyLogs from "./pages/DailyLogs";
 import UpdateBusiness from "./pages/settings/UpdateBusiness";
 import Products from "./pages/Products";
 import AiChat from "./pages/ai-chat";
+import ManualPaymentPage from "./pages/payment/ManualPaymentPage";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
           <Route path="/ai-chat" element={<ReduxProtectedRoute><AiChat /></ReduxProtectedRoute>} />
           <Route path="/settings" element={<ReduxProtectedRoute><Settings /></ReduxProtectedRoute>} />
           <Route path="/settings/business/update" element={<ReduxProtectedRoute><UpdateBusiness /></ReduxProtectedRoute>} />
+          <Route path="/payment/:planType" element={<ReduxProtectedRoute><ManualPaymentPage /></ReduxProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         </ReduxAuthProvider>
