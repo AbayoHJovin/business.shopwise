@@ -183,6 +183,13 @@ export const fetchUserProfile = createAsyncThunk(
         ...DEFAULT_REQUEST_OPTIONS,
       });
 
+      // Handle 401 Unauthorized immediately
+      if (response.status === 401) {
+        // Clear token from localStorage as it's invalid
+        localStorage.removeItem('token');
+        return rejectWithValue('Unauthorized');
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -289,11 +296,17 @@ const authSlice = createSlice({
       })
       .addCase(fetchUserProfile.rejected, (state, action) => {
         state.isLoading = false;
-        // If token is invalid, clear auth state
-        if (action.payload === 'No authentication token' || action.payload === 'Invalid token') {
+        // If token is invalid or unauthorized, clear auth state
+        if (
+          action.payload === 'No authentication token' || 
+          action.payload === 'Invalid token' || 
+          action.payload === 'Unauthorized'
+        ) {
           state.isAuthenticated = false;
           state.user = null;
           state.token = null;
+          // Remove token from localStorage
+          localStorage.removeItem('token');
         }
         state.error = action.payload as string;
       });

@@ -28,9 +28,10 @@ const ChatInput: React.FC<ChatInputProps> = memo(({ disabled, conversationId }) 
     if (!message.trim()) return;
 
     // Only send conversationId if it's provided and not a temp ID
+    // Important: Don't use conversationId if currentConversation is null (new chat)
     const payload = {
       message: message.trim(),
-      ...(conversationId && !conversationId.startsWith('temp-') ? { conversationId } : {})
+      ...(currentConversation && conversationId && !conversationId.startsWith('temp-') ? { conversationId } : {})
     };
 
     dispatch(sendMessage(payload));
@@ -40,7 +41,7 @@ const ChatInput: React.FC<ChatInputProps> = memo(({ disabled, conversationId }) 
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
-  }, [message, dispatch, conversationId]);
+  }, [message, dispatch, conversationId, currentConversation]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +55,9 @@ const ChatInput: React.FC<ChatInputProps> = memo(({ disabled, conversationId }) 
     setMessage('');
     
     // Send message to API
-    const payload = currentConversation && !currentConversation.conversationId.startsWith('temp-')
+    // Only include conversationId if we have a current conversation that's not a temp ID
+    // This ensures new chats don't get attached to previously selected conversations
+    const payload = currentConversation && currentConversation.conversationId && !currentConversation.conversationId.startsWith('temp-')
       ? { message: message.trim(), conversationId: currentConversation.conversationId }
       : { message: message.trim() };
     dispatch(sendMessage(payload));

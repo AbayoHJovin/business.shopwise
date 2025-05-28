@@ -24,7 +24,7 @@ const plans = [
   },
   {
     name: "Weekly Premium",
-    price: "2000 RWF",
+    price: "2500 RWF",
     frequency: "per week",
     description: "Advanced features for growing businesses",
     features: [
@@ -44,7 +44,7 @@ const plans = [
   },
   {
     name: "Monthly Premium",
-    price: "6000 RWF",
+    price: "8500 RWF",
     frequency: "per month",
     description: "Best value for established businesses",
     features: [

@@ -56,19 +56,20 @@ export const sendMessage = createAsyncThunk<
   { message: string; conversationId?: string },
   { state: RootState }
 >('aiChat/sendMessage', async ({ message, conversationId }, { rejectWithValue, dispatch, getState }) => {
-  // Get the selected conversation ID from state if available
+  // Get the current state
   const state = getState();
-  const selectedId = state.aiChat.selectedConversationId;
+  const { currentConversation } = state.aiChat;
   
-  // Use the selected ID if no conversationId was provided
-  const finalConversationId = conversationId || selectedId;
+  // Only use the conversationId that was explicitly passed
+  // This ensures new chats don't get attached to previously selected conversations
   try {
     const response = await fetch(API_ENDPOINTS.AI.CHAT, {
       method: 'POST',
       ...DEFAULT_REQUEST_OPTIONS,
       body: JSON.stringify({ 
         message, 
-        conversationId: finalConversationId 
+        // Only include conversationId if it was explicitly provided
+        ...(conversationId ? { conversationId } : {})
       }),
     });
 
@@ -168,6 +169,7 @@ const aiChatSlice = createSlice({
     },
     clearCurrentConversation: (state) => {
       state.currentConversation = null;
+      state.selectedConversationId = null;
     },
     clearError: (state) => {
       state.error = null;
