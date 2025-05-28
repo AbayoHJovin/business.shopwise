@@ -109,7 +109,7 @@ const UpdateBusiness = () => {
     try {
       await dispatch(updateBusiness(formData)).unwrap();
       toast.success('Business updated successfully');
-      navigate('/settings/profile');
+      navigate('/settings');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update business');
     }

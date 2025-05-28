@@ -7,12 +7,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
-import { AlertCircle, CalendarIcon, Clock, Filter, FileText, Search } from 'lucide-react';
+import { AlertCircle, CalendarIcon, Clock, Filter, FileText, Search, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useDailySummaries } from '@/hooks/useDailySummaries';
+import { useAiAnalytics } from '@/hooks/useAiAnalytics';
+import AiAnalyticsModal from '@/components/daily-logs/AiAnalyticsModal';
 import { DailySummary } from '@/store/slices/dailySummariesSlice';
 
 const DailyLogs = () => {
@@ -25,6 +27,16 @@ const DailyLogs = () => {
     searchQuery,
     setSearchQuery
   } = useDailySummaries();
+  
+  // AI Analytics hook
+  const {
+    dailySummary,
+    isLoading: isLoadingAi,
+    error: aiError,
+    isModalOpen,
+    fetchDailySummary,
+    closeModal
+  } = useAiAnalytics();
   
   const [date, setDate] = useState<Date | undefined>(
     selectedDate ? new Date(selectedDate) : new Date()
@@ -142,18 +154,28 @@ const DailyLogs = () => {
                   </div>
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-4 space-y-2">
                   <Button 
                     variant="outline" 
                     className="w-full"
                     onClick={() => {
                       setDate(new Date());
                       setSearchQuery('');
-                      fetchSummariesByDate(new Date().toISOString().split('T')[0]);
+                      fetchSummariesByDate(format(new Date(), 'yyyy-MM-dd'));
                     }}
                   >
-                    <Filter className="mr-2 h-4 w-4" />
-                    Reset Filters
+                    <Clock className="mr-2 h-4 w-4" />
+                    Reset to Today
+                  </Button>
+                  
+                  <Button 
+                    variant="default" 
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    onClick={fetchDailySummary}
+                    disabled={isLoadingAi || filteredSummaries.length === 0}
+                  >
+                    <Brain className="mr-2 h-4 w-4" />
+                    AI Analytics
                   </Button>
                 </div>
               </CardContent>
@@ -283,6 +305,15 @@ const DailyLogs = () => {
           </div>
         </div>
       </div>
+      
+      {/* AI Analytics Modal */}
+      <AiAnalyticsModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        dailySummary={dailySummary}
+        isLoading={isLoadingAi}
+        error={aiError}
+      />
     </MainLayout>
   );
 };
