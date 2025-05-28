@@ -148,11 +148,7 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      // Only call the logout API if we have a token
-      if (token) {
-        try {
+      try {
           // Call the backend to invalidate the token
           await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
             method: 'POST',
@@ -162,10 +158,6 @@ export const logout = createAsyncThunk(
           console.warn('Error calling logout API:', error);
           // Continue with local logout even if API call fails
         }
-      }
-      
-      // Remove token from localStorage
-      localStorage.removeItem('token');
       return null;
     } catch (error) {
       return rejectWithValue('Logout failed');

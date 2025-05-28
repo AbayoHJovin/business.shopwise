@@ -110,18 +110,16 @@ const AutoLocate: React.FC<AutoLocateProps> = ({ onLocationFound, onLoadingChang
       });
     };
 
-    // Add event listeners
     map.once('locationfound', handleLocationFound);
     map.once('locationerror', handleLocationError);
 
-    // Clean up
     return () => {
       map.off('locationfound', handleLocationFound);
       map.off('locationerror', handleLocationError);
     };
   }, [map, onLocationFound, onLoadingChange]);
 
-  return null; // This component doesn't render anything
+  return null; 
 };
 
 export default AutoLocate;

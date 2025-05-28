@@ -128,7 +128,6 @@ const UpdateBusiness = () => {
     }
   };
 
-  // Handle location suggestion selection
   const handleLocationSelect = (result: any) => {
     setSearchQuery(result.display_name);
     setSearchResults([]);

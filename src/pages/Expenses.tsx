@@ -17,7 +17,9 @@ import {
   Search,
   Calendar as CalendarIcon,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  TrendingUp,
+  Brain
 } from 'lucide-react';
 import { format, parseISO, isValid, parse } from 'date-fns';
 import { useAppDispatch, useAppSelector } from '@/hooks/store';
@@ -29,6 +31,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { useExpenseAnalytics } from '@/hooks/useExpenseAnalytics';
+import ExpenseAnalyticsModal from '@/components/expenses/ExpenseAnalyticsModal';
 
 type CategoryFilter = 'All' | ExpenseCategory;
 type SortOption = 'amount' | 'title' | 'createdAt';
@@ -41,6 +45,16 @@ const Expenses = () => {
   // Get expenses and business from Redux store
   const { items: expenses, isLoading, error, selectedDate, totalAmount } = useAppSelector((state) => state.expenses);
   const { currentBusiness } = useAppSelector(state => state.business);
+  
+  // AI Analytics hook
+  const {
+    analytics,
+    isLoading: isLoadingAnalytics,
+    error: analyticsError,
+    isModalOpen,
+    fetchAnalytics,
+    closeModal
+  } = useExpenseAnalytics();
   
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('All');
   const [sortOption, setSortOption] = useState<SortOption>('createdAt');
@@ -168,12 +182,22 @@ const navigate = useNavigate()
               Total: <span className="text-primary">${totalAmount.toFixed(2)}</span>
             </p>
           </div>
-          <Button 
-            className="self-start sm:self-auto"
-            onClick={() => navigate('/expenses/add')}
-          >
-            <Plus className="mr-2" /> Add Expense
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline"
+              className="self-start sm:self-auto"
+              onClick={fetchAnalytics}
+              disabled={isLoadingAnalytics || expenses.length === 0}
+            >
+              <Brain className="mr-2 h-4 w-4" /> AI Analytics
+            </Button>
+            <Button 
+              className="self-start sm:self-auto"
+              onClick={() => navigate('/expenses/add')}
+            >
+              <Plus className="mr-2" /> Add Expense
+            </Button>
+          </div>
         </div>
 
         <Card className="mb-6">
@@ -345,6 +369,15 @@ const navigate = useNavigate()
           </>
         )}
       </div>
+      
+      {/* Expense Analytics Modal */}
+      <ExpenseAnalyticsModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        analytics={analytics}
+        isLoading={isLoadingAnalytics}
+        error={analyticsError}
+      />
     </MainLayout>
   );
 };

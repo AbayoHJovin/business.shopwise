@@ -100,6 +100,7 @@ export const API_ENDPOINTS = {
     GET_CONVERSATIONS_SIDEBAR: `${API_BASE_URL}/api/ai/conversations/sidebar`,
     GET_CONVERSATION: (id: string) => `${API_BASE_URL}/api/ai/conversation/${id}`,
     BUSINESS_DAILY_SUMMARY: `${API_BASE_URL}/api/ai/business/daily-summary`,
+    EXPENSE_ANALYTICS: `${API_BASE_URL}/api/ai/business/expense-analytics`,
   },
 };
 
