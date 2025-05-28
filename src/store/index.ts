@@ -13,6 +13,7 @@ import businessProfileReducer from '@/store/slices/businessProfileSlice';
 import aiChatReducer from '@/store/slices/aiChatSlice';
 import aiAnalyticsReducer from '@/store/slices/aiAnalyticsSlice';
 import expenseAnalyticsReducer from '@/store/slices/expenseAnalyticsSlice';
+import salaryPaymentsReducer from '@/store/slices/salaryPaymentsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -30,6 +31,7 @@ export const store = configureStore({
     aiChat: aiChatReducer,
     aiAnalytics: aiAnalyticsReducer,
     expenseAnalytics: expenseAnalyticsReducer,
+    salaryPayments: salaryPaymentsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -15,6 +15,7 @@ import Employees from "./pages/Employees";
 import EmployeeDetail from "./pages/EmployeeDetail";
 import EmployeeEdit from "./pages/EmployeeEdit";
 import EmployeeAdd from "./pages/EmployeeAdd";
+import EmployeeSalaryPayments from "./pages/EmployeeSalaryPayments";
 import Expenses from "./pages/Expenses";
 import ExpenseAdd from "./pages/expenses/ExpenseAdd";
 import LandingPage from "./pages/LandingPage";
@@ -65,6 +66,7 @@ const App = () => (
           <Route path="/employees/:id" element={<ReduxProtectedRoute><EmployeeDetail /></ReduxProtectedRoute>} />
           <Route path="/employees/new" element={<ReduxProtectedRoute><EmployeeAdd /></ReduxProtectedRoute>} />
           <Route path="/employees/edit/:id" element={<ReduxProtectedRoute><EmployeeEdit /></ReduxProtectedRoute>} />
+          <Route path="/salary-payments/:id" element={<ReduxProtectedRoute><EmployeeSalaryPayments /></ReduxProtectedRoute>} />
           <Route path="/expenses" element={<ReduxProtectedRoute><Expenses /></ReduxProtectedRoute>} />
           <Route path="/expenses/add" element={<ReduxProtectedRoute><ExpenseAdd /></ReduxProtectedRoute>} />
           <Route path="/sales" element={<ReduxProtectedRoute><Sales /></ReduxProtectedRoute>} />

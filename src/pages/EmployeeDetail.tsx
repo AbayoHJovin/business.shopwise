@@ -142,6 +142,12 @@ const EmployeeDetail = () => {
           {selectedEmployee && (
             <div className="flex gap-2">
               <Button variant="outline" asChild>
+                <a href={`/salary-payments/${selectedEmployee.id}`}>
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Salary
+                </a>
+              </Button>
+              <Button variant="outline" asChild>
                 <a href={`/employees/edit/${selectedEmployee.id}`}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit

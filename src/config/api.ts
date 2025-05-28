@@ -69,6 +69,12 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/api/employees/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/api/employees/${id}`,
   },
+  // Salary payments endpoints
+  SALARY_PAYMENTS: {
+    GET_BY_EMPLOYEE: (employeeId: string) => `${API_BASE_URL}/api/salary-payments/employee/${employeeId}`,
+    CREATE: `${API_BASE_URL}/api/salary-payments`,
+    DELETE: (paymentId: string) => `${API_BASE_URL}/api/salary-payments/${paymentId}`,
+  },
   // Dashboard endpoints
   DASHBOARD: {
     GET: `${API_BASE_URL}/api/dashboard`,
