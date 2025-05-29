@@ -2,11 +2,31 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { API_ENDPOINTS, DEFAULT_REQUEST_OPTIONS } from '@/config/api';
 
 // Define types for our state
+export type SubscriptionPlan = 'FREE' | 'BASIC' | 'WEEKLY' | 'MONTHLY' | 'PRO_WEEKLY' | 'PRO_MONTHLY';
+
+export interface SubscriptionInfo {
+  plan: SubscriptionPlan;
+  finishedFreeTrial: boolean;
+  freeTrialStartedAt?: string | null;
+  subscribedAt?: string | null;
+  expirationDate?: string | null;
+  // Backend uses allowedPremium, but we'll handle both for compatibility
+  isAllowedPremium?: boolean;
+  allowedPremium?: boolean;
+  remainingDays: number;
+  // Backend uses inFreeTrial, but we'll handle both for compatibility
+  isInFreeTrial?: boolean;
+  inFreeTrial?: boolean;
+}
+
 interface User {
   id: string;
   email: string;
   name: string;
+  phone?: string;
   role: string;
+  businessIds?: string[];
+  subscription?: SubscriptionInfo;
   // Add other user properties as needed
 }
 

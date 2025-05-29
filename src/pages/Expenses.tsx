@@ -19,7 +19,8 @@ import {
   Loader2,
   AlertCircle,
   TrendingUp,
-  Brain
+  Brain,
+  Crown
 } from 'lucide-react';
 import { format, parseISO, isValid, parse } from 'date-fns';
 import { useAppDispatch, useAppSelector } from '@/hooks/store';
@@ -33,6 +34,8 @@ import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useExpenseAnalytics } from '@/hooks/useExpenseAnalytics';
 import ExpenseAnalyticsModal from '@/components/expenses/ExpenseAnalyticsModal';
+import PremiumFeatureModal from '@/components/premium/PremiumFeatureModal';
+import { hasPremiumAccess } from '@/utils/subscriptionUtils';
 
 type CategoryFilter = 'All' | ExpenseCategory;
 type SortOption = 'amount' | 'title' | 'createdAt';
@@ -45,6 +48,7 @@ const Expenses = () => {
   // Get expenses and business from Redux store
   const { items: expenses, isLoading, error, selectedDate, totalAmount } = useAppSelector((state) => state.expenses);
   const { currentBusiness } = useAppSelector(state => state.business);
+  const { user } = useAppSelector(state => state.auth);
   
   // AI Analytics hook
   const {
@@ -55,6 +59,9 @@ const Expenses = () => {
     fetchAnalytics,
     closeModal
   } = useExpenseAnalytics();
+  
+  // Premium feature modal state
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('All');
   const [sortOption, setSortOption] = useState<SortOption>('createdAt');
@@ -198,10 +205,21 @@ const navigate = useNavigate()
           <div className="flex flex-col sm:flex-row gap-2">
             <Button 
               variant="outline"
-              className="self-start sm:self-auto"
-              onClick={fetchAnalytics}
+              className="self-start sm:self-auto relative group"
+              onClick={() => {
+                // Check if user has premium access based on backend's isAllowedPremium flag
+                if (hasPremiumAccess(user?.subscription)) {
+                  fetchAnalytics();
+                } else {
+                  // Show premium feature modal
+                  setIsPremiumModalOpen(true);
+                }
+              }}
               disabled={isLoadingAnalytics || expenses.length === 0}
             >
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Crown className="h-2.5 w-2.5 text-white" />
+              </div>
               <Brain className="mr-2 h-4 w-4" /> AI Analytics
             </Button>
             <Button 
@@ -390,6 +408,13 @@ const navigate = useNavigate()
         analytics={analytics}
         isLoading={isLoadingAnalytics}
         error={analyticsError}
+      />
+      
+      {/* Premium Feature Modal */}
+      <PremiumFeatureModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        featureName="AI Analytics"
       />
     </MainLayout>
   );

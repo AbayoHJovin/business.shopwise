@@ -65,18 +65,33 @@ const AiChat = () => {
     dispatch(clearCurrentConversation());
   }, [dispatch]);
   
-  // Immediate check for selected business and redirect if none
+  // Check for selected business when component mounts
   useEffect(() => {
+    // Try to fetch the current business if not already loaded
     if (!currentBusiness) {
-      // Immediately redirect if no business is selected
-      toast({
-        title: "No business selected",
-        description: "Please select a business to use AI Chat",
-        variant: "destructive"
-      });
-      navigate('/business/select');
+      dispatch(fetchCurrentSelectedBusiness())
+        .unwrap()
+        .catch(() => {
+          // Business fetch will fail if no business is selected
+        });
     }
-  }, [currentBusiness, navigate, toast]);
+  }, [dispatch, currentBusiness]);
+
+  // Handle errors - redirect to business selection if no business is selected
+  useEffect(() => {
+    if (error) {
+      // Check if the error indicates no business is selected
+      if (error && (error.includes('No business selected') || error.includes('select a business'))) {
+        toast({
+          title: "No business selected",
+          description: "Please select a business to use AI Chat",
+          variant: "destructive"
+        });
+        // Redirect to business selection page
+        navigate('/business/select');
+      }
+    }
+  }, [error, navigate, toast]);
 
   // Effect to refresh conversations when a new conversation is created
   useEffect(() => {

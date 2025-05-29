@@ -38,25 +38,40 @@ const DailyLogs = () => {
   
   const { currentBusiness } = useAppSelector(state => state.business);
   
-  // Immediate check for selected business and redirect if none
+  // Fetch daily summaries on component mount
   useEffect(() => {
-    if (!currentBusiness) {
-      // Immediately redirect if no business is selected
-      toast({
-        title: "No business selected",
-        description: "Please select a business to view daily logs",
-        variant: "destructive"
-      });
-      navigate('/business/select');
-    }
-  }, [currentBusiness, navigate, toast]);
-  
-  // Fetch data when business is selected and date changes
-  useEffect(() => {
-    if (currentBusiness && selectedDate) {
+    if (selectedDate) {
       fetchSummariesByDate(selectedDate);
     }
-  }, [currentBusiness, selectedDate]);
+  }, [selectedDate]);
+
+  // Check for selected business and handle redirect
+  useEffect(() => {
+    // Try to fetch the current business if not already loaded
+    if (!currentBusiness) {
+      dispatch(fetchCurrentSelectedBusiness())
+        .unwrap()
+        .catch(() => {
+          // Business fetch will fail if no business is selected
+        });
+    }
+  }, [dispatch, currentBusiness]);
+
+  // Handle errors - redirect to business selection if no business is selected
+  useEffect(() => {
+    if (error) {
+      // Check if the error indicates no business is selected
+      if (error.includes('No business selected') || error.includes('select a business')) {
+        toast({
+          title: "No business selected",
+          description: "Please select a business to view daily logs",
+          variant: "destructive"
+        });
+        // Redirect to business selection page
+        navigate('/business/select');
+      }
+    }
+  }, [error, navigate, toast]);
 
   // AI Analytics hook
   const {
