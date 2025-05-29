@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,16 @@ import { useDailySummaries } from '@/hooks/useDailySummaries';
 import { useAiAnalytics } from '@/hooks/useAiAnalytics';
 import AiAnalyticsModal from '@/components/daily-logs/AiAnalyticsModal';
 import { DailySummary } from '@/store/slices/dailySummariesSlice';
+import { useAppDispatch, useAppSelector } from '@/hooks/store';
+import { fetchCurrentSelectedBusiness } from '@/store/slices/businessSlice';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const DailyLogs = () => {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { toast } = useToast();
+  
   const { 
     filteredSummaries, 
     selectedDate, 
@@ -28,6 +36,28 @@ const DailyLogs = () => {
     setSearchQuery
   } = useDailySummaries();
   
+  const { currentBusiness } = useAppSelector(state => state.business);
+  
+  // Immediate check for selected business and redirect if none
+  useEffect(() => {
+    if (!currentBusiness) {
+      // Immediately redirect if no business is selected
+      toast({
+        title: "No business selected",
+        description: "Please select a business to view daily logs",
+        variant: "destructive"
+      });
+      navigate('/business/select');
+    }
+  }, [currentBusiness, navigate, toast]);
+  
+  // Fetch data when business is selected and date changes
+  useEffect(() => {
+    if (currentBusiness && selectedDate) {
+      fetchSummariesByDate(selectedDate);
+    }
+  }, [currentBusiness, selectedDate]);
+
   // AI Analytics hook
   const {
     dailySummary,

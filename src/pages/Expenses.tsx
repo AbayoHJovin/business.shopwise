@@ -86,6 +86,8 @@ const Expenses = () => {
               description: "Please select a business to view expenses",
               variant: "destructive"
             });
+            // Redirect to business selection page
+            navigate('/business/select');
           } else {
             toast({
               title: "Error",
@@ -102,11 +104,22 @@ const Expenses = () => {
         dispatch(fetchExpenses(formattedDate))
           .unwrap()
           .catch((error) => {
-            toast({
-              title: "Error",
-              description: error || "Failed to load expenses. Please try again later.",
-              variant: "destructive"
-            });
+            // Check if the error is related to business selection
+            if (error.includes('No business selected') || error.includes('select a business')) {
+              toast({
+                title: "No business selected",
+                description: "Please select a business to view expenses",
+                variant: "destructive"
+              });
+              // Redirect to business selection page
+              navigate('/business/select');
+            } else {
+              toast({
+                title: "Error",
+                description: error || "Failed to load expenses. Please try again later.",
+                variant: "destructive"
+              });
+            }
           });
       }
     }

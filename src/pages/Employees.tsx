@@ -57,6 +57,7 @@ const Employees = () => {
               description: "Please select a business to view employees",
               variant: "destructive"
             });
+            // Redirect to business selection page
             navigate('/business/select');
           } else {
             toast({
@@ -71,11 +72,22 @@ const Employees = () => {
       dispatch(fetchEmployees())
         .unwrap()
         .catch((error) => {
-          toast({
-            title: "Error",
-            description: error || "Failed to load employees. Please try again later.",
-            variant: "destructive"
-          });
+          // Check if the error is related to business selection
+          if (error.includes('No business selected') || error.includes('select a business')) {
+            toast({
+              title: "No business selected",
+              description: "Please select a business to view employees",
+              variant: "destructive"
+            });
+            // Redirect to business selection page
+            navigate('/business/select');
+          } else {
+            toast({
+              title: "Error",
+              description: error || "Failed to load employees. Please try again later.",
+              variant: "destructive"
+            });
+          }
         });
     }
   }, [dispatch, toast, navigate]);

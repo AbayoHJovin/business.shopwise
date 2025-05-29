@@ -8,6 +8,9 @@ import { clearCurrentConversation, clearError, fetchConversationsSidebar } from 
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
+import { fetchCurrentSelectedBusiness } from '@/store/slices/businessSlice';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 // Lazy load components for better performance
 const ChatMessage = lazy(() => import('@/components/ai-chat/ChatMessage'));
@@ -16,12 +19,15 @@ const ConversationSidebar = lazy(() => import('@/components/ai-chat/Conversation
 
 const AiChat = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const { 
     currentConversation, 
     isLoadingConversation,
     isSendingMessage,
     error 
   } = useAppSelector(state => state.aiChat);
+  const { currentBusiness } = useAppSelector(state => state.business);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [sidebarOpen, setSidebarOpen] = React.useState(!isMobile);
@@ -59,6 +65,19 @@ const AiChat = () => {
     dispatch(clearCurrentConversation());
   }, [dispatch]);
   
+  // Immediate check for selected business and redirect if none
+  useEffect(() => {
+    if (!currentBusiness) {
+      // Immediately redirect if no business is selected
+      toast({
+        title: "No business selected",
+        description: "Please select a business to use AI Chat",
+        variant: "destructive"
+      });
+      navigate('/business/select');
+    }
+  }, [currentBusiness, navigate, toast]);
+
   // Effect to refresh conversations when a new conversation is created
   useEffect(() => {
     if (currentConversation?.conversationId && 

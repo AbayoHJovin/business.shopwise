@@ -15,6 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchSalesByDate, setSelectedDate as setReduxSelectedDate } from '@/store/slices/salesSlice';
+import { fetchCurrentSelectedBusiness } from '@/store/slices/businessSlice';
+import { useToast } from '@/hooks/use-toast';
 
 // Define the column types for the sales data table
 type SaleRecord = {
@@ -90,7 +92,9 @@ const salesColumns = [
 const Sales = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
   const { items: sales, isLoading, error, selectedDate: reduxSelectedDate, totalAmount } = useAppSelector(state => state.sales);
+  const { currentBusiness } = useAppSelector(state => state.business);
   const [localDate, setLocalDate] = useState<Date>(new Date());
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -112,9 +116,59 @@ const Sales = () => {
 
   // Fetch sales data when component mounts or date changes
   useEffect(() => {
-    const formattedDate = localDate.toISOString().split('T')[0];
-    dispatch(fetchSalesByDate(formattedDate));
-  }, [dispatch]);
+    // First, check if we have a selected business
+    if (!currentBusiness) {
+      // Try to fetch the current business
+      dispatch(fetchCurrentSelectedBusiness())
+        .unwrap()
+        .then(() => {
+          // After successfully fetching the business, fetch sales data
+          const formattedDate = localDate.toISOString().split('T')[0];
+          return dispatch(fetchSalesByDate(formattedDate)).unwrap();
+        })
+        .catch((error) => {
+          // If we can't get a business, show error and redirect
+          if (error.includes('No business selected') || error.includes('select a business')) {
+            toast({
+              title: "No business selected",
+              description: "Please select a business to view sales",
+              variant: "destructive"
+            });
+            // Redirect to business selection page
+            navigate('/business/select');
+          } else {
+            toast({
+              title: "Error",
+              description: error || "Failed to load sales data. Please try again later.",
+              variant: "destructive"
+            });
+          }
+        });
+    } else {
+      // If we already have a business, fetch sales data directly
+      const formattedDate = localDate.toISOString().split('T')[0];
+      dispatch(fetchSalesByDate(formattedDate))
+        .unwrap()
+        .catch((error) => {
+          // Check if the error is related to business selection
+          if (error.includes('No business selected') || error.includes('select a business')) {
+            toast({
+              title: "No business selected",
+              description: "Please select a business to view sales",
+              variant: "destructive"
+            });
+            // Redirect to business selection page
+            navigate('/business/select');
+          } else {
+            toast({
+              title: "Error",
+              description: error || "Failed to load sales data. Please try again later.",
+              variant: "destructive"
+            });
+          }
+        });
+    }
+  }, [dispatch, navigate, toast, currentBusiness, localDate]);
 
   return (
     <MainLayout title="Sales Dashboard">
