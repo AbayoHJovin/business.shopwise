@@ -33,7 +33,7 @@ const Settings = () => {
   const { isAuthenticated } = useAppSelector(state => state.auth);
   
   const [settings, setSettings] = useState<UserSettings>({
-    theme: 'system',
+    theme: 'light',
     defaultDashboard: 'dashboard',
     enableNotifications: true,
     tableDensity: 'default',
@@ -82,7 +82,7 @@ const Settings = () => {
   // Reset settings to defaults
   const resetSettings = () => {
     const defaultSettings: UserSettings = {
-      theme: 'system',
+      theme: 'light',
       defaultDashboard: 'dashboard',
       enableNotifications: true,
       tableDensity: 'default',

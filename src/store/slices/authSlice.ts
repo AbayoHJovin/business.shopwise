@@ -20,7 +20,7 @@ export interface SubscriptionInfo {
   inFreeTrial?: boolean;
 }
 
-interface User {
+export interface User {
   id: string;
   email: string;
   name: string;
@@ -28,6 +28,10 @@ interface User {
   role: string;
   businessIds?: string[];
   subscription?: SubscriptionInfo;
+  createdAt?: string;
+  updatedAt?: string;
+  verified?: boolean;
+  active?: boolean;
   // Add other user properties as needed
 }
 
@@ -53,6 +57,8 @@ interface UserLoginRequest {
   email: string;
   password: string;
 }
+
+
 
 export const login = createAsyncThunk(
   'auth/login',
@@ -165,23 +171,38 @@ export const register = createAsyncThunk(
   }
 );
 
+// Logout thunk
 export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      try {
-          // Call the backend to invalidate the token
-          await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
-            method: 'POST',
-            ...DEFAULT_REQUEST_OPTIONS,
-          });
-        } catch (error) {
-          console.warn('Error calling logout API:', error);
-          // Continue with local logout even if API call fails
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
+        method: 'POST',
+        ...DEFAULT_REQUEST_OPTIONS,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        let errorMessage = 'Logout failed';
+        
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
         }
-      return null;
+        
+        return rejectWithValue(errorMessage);
+      }
+      
+      // Clear token from local storage
+      localStorage.removeItem('token');
+      
+      return { success: true };
     } catch (error) {
-      return rejectWithValue('Logout failed');
+      console.error('Logout error:', error);
+      // Continue with local logout even if API call fails
+      localStorage.removeItem('token');
+      return rejectWithValue('Network error during logout');
     }
   }
 );
@@ -249,13 +270,20 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     // Additional reducers if needed
-    clearError: (state) => {
+    clearError(state) {
       state.error = null;
+    },
+    logoutLocally(state) {
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      localStorage.removeItem('token');
     },
   },
   extraReducers: (builder) => {
-    // Login cases
     builder
+      
+      // Login cases
       .addCase(login.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -314,6 +342,7 @@ const authSlice = createSlice({
     builder
       .addCase(logout.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(logout.fulfilled, (state) => {
         state.isLoading = false;
@@ -324,7 +353,11 @@ const authSlice = createSlice({
       })
       .addCase(logout.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.payload as string || 'Logout failed';
+        // Even if the API call fails, we should still clear the local state
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
       });
 
     // Fetch user profile cases
@@ -359,5 +392,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { clearError } = authSlice.actions;
+export const { clearError, logoutLocally } = authSlice.actions;
 export default authSlice.reducer;

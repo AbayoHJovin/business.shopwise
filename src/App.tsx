@@ -32,6 +32,7 @@ import BusinessSelection from "./pages/business/BusinessSelection";
 import BusinessCreate from "./pages/business/BusinessCreate";
 import DailyLogs from "./pages/DailyLogs";
 import UpdateBusiness from "./pages/settings/UpdateBusiness";
+import ProfilePage from "./pages/settings/ProfilePage";
 import Products from "./pages/Products";
 import AiChat from "./pages/ai-chat";
 import ManualPaymentPage from "./pages/payment/ManualPaymentPage";
@@ -77,6 +78,7 @@ const App = () => (
           <Route path="/ai-chat" element={<ReduxProtectedRoute><AiChat /></ReduxProtectedRoute>} />
           <Route path="/settings" element={<ReduxProtectedRoute><Settings /></ReduxProtectedRoute>} />
           <Route path="/settings/business/update" element={<ReduxProtectedRoute><UpdateBusiness /></ReduxProtectedRoute>} />
+          <Route path="/settings/profile" element={<ReduxProtectedRoute><ProfilePage /></ReduxProtectedRoute>} />
           <Route path="/payment/:planType" element={<ReduxProtectedRoute><ManualPaymentPage /></ReduxProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

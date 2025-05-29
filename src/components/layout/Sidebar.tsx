@@ -18,6 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'react-router-dom';
+import { useAppSelector } from '@/store/hooks';
 
 type NavItemProps = {
   icon: React.ElementType;
@@ -48,6 +49,7 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAppSelector(state => state.auth);
 
   // Load collapsed state from localStorage if available
   useEffect(() => {
@@ -59,9 +61,28 @@ const Sidebar = () => {
 
   // Save collapsed state to localStorage when it changes
   const toggleCollapse = () => {
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-    localStorage.setItem('sidebarCollapsed', String(newState));
+    setIsCollapsed(!isCollapsed);
+  };
+
+  // Toggle mobile sidebar
+  const toggleMobileSidebar = () => {
+    setIsMobileOpen(!isMobileOpen);
+  };
+
+  // Close mobile sidebar when location changes
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [location]);
+
+  // Get user initials for the avatar
+  const getUserInitials = () => {
+    if (!user || !user.name) return 'U';
+    
+    const nameParts = user.name.split(' ');
+    if (nameParts.length >= 2) {
+      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+    }
+    return nameParts[0][0].toUpperCase();
   };
 
   return (
@@ -125,11 +146,15 @@ const Sidebar = () => {
           {!isCollapsed && (
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-accent-foreground">
-                JS
+                {getUserInitials()}
               </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-sidebar-foreground">Abayo Jovin</span>
-                <span className="text-xs text-sidebar-foreground/70">Admin</span>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-medium text-sidebar-foreground truncate">
+                  {user?.name || 'User'}
+                </span>
+                <span className="text-xs text-sidebar-foreground/70 truncate">
+                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : 'User'}
+                </span>
               </div>
             </div>
           )}
