@@ -28,6 +28,9 @@ const Navbar = () => {
   };
   
   const scrollToSection = (sectionId: string) => {
+    // Update URL with hash without causing a page reload
+    window.history.pushState(null, '', `/#${sectionId}`);
+    
     const element = document.getElementById(sectionId);
     if (element) {
       // Get the height of the navbar to offset the scroll position
@@ -58,34 +61,50 @@ const Navbar = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
-            <button 
-              onClick={() => scrollToSection('about')} 
+            <a 
+              href="/#about"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('about');
+              }} 
               className={`text-gray-700 hover:text-primary font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 rounded px-2 py-1 transition-all duration-200 ${activeSection === 'about' ? 'text-primary font-bold border-b-2 border-primary' : ''}`}
               aria-current={activeSection === 'about' ? 'page' : undefined}
             >
               About Us
-            </button>
-            <button 
-              onClick={() => scrollToSection('how-it-works')} 
+            </a>
+            <a 
+              href="/#how-it-works"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('how-it-works');
+              }} 
               className={`text-gray-700 hover:text-primary font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 rounded px-2 py-1 transition-all duration-200 ${activeSection === 'how-it-works' ? 'text-primary font-bold border-b-2 border-primary' : ''}`}
               aria-current={activeSection === 'how-it-works' ? 'page' : undefined}
             >
               How It Works
-            </button>
-            <button 
-              onClick={() => scrollToSection('plans')} 
+            </a>
+            <a 
+              href="/#plans"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('plans');
+              }} 
               className={`text-gray-700 hover:text-primary font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 rounded px-2 py-1 transition-all duration-200 ${activeSection === 'plans' ? 'text-primary font-bold border-b-2 border-primary' : ''}`}
               aria-current={activeSection === 'plans' ? 'page' : undefined}
             >
               Subscription Plans
-            </button>
-            <button 
-              onClick={() => scrollToSection('faq')} 
+            </a>
+            <a 
+              href="/#faq"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('faq');
+              }} 
               className={`text-gray-700 hover:text-primary font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 rounded px-2 py-1 transition-all duration-200 ${activeSection === 'faq' ? 'text-primary font-bold border-b-2 border-primary' : ''}`}
               aria-current={activeSection === 'faq' ? 'page' : undefined}
             >
               FAQs
-            </button>
+            </a>
             <Link to="/dashboard">
               <Button variant="outline" className="ml-4">Dashboard</Button>
             </Link>
@@ -109,34 +128,50 @@ const Navbar = () => {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-b shadow-lg">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <button 
-              onClick={() => scrollToSection('about')} 
+            <a 
+              href="/#about"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('about');
+              }} 
               className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:text-primary hover:bg-gray-50 ${activeSection === 'about' ? 'text-primary bg-gray-50 font-bold' : 'text-gray-700'}`}
               aria-current={activeSection === 'about' ? 'page' : undefined}
             >
               About Us
-            </button>
-            <button 
-              onClick={() => scrollToSection('how-it-works')} 
+            </a>
+            <a 
+              href="/#how-it-works"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('how-it-works');
+              }} 
               className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:text-primary hover:bg-gray-50 ${activeSection === 'how-it-works' ? 'text-primary bg-gray-50 font-bold' : 'text-gray-700'}`}
               aria-current={activeSection === 'how-it-works' ? 'page' : undefined}
             >
               How It Works
-            </button>
-            <button 
-              onClick={() => scrollToSection('plans')} 
+            </a>
+            <a 
+              href="/#plans"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('plans');
+              }} 
               className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:text-primary hover:bg-gray-50 ${activeSection === 'plans' ? 'text-primary bg-gray-50 font-bold' : 'text-gray-700'}`}
               aria-current={activeSection === 'plans' ? 'page' : undefined}
             >
               Subscription Plans
-            </button>
-            <button 
-              onClick={() => scrollToSection('faq')} 
+            </a>
+            <a 
+              href="/#faq"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('faq');
+              }} 
               className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:text-primary hover:bg-gray-50 ${activeSection === 'faq' ? 'text-primary bg-gray-50 font-bold' : 'text-gray-700'}`}
               aria-current={activeSection === 'faq' ? 'page' : undefined}
             >
               FAQs
-            </button>
+            </a>
             <Link 
               to="/dashboard" 
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50"
