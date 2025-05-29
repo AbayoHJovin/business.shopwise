@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
-import { AlertCircle, CalendarIcon, Clock, Filter, FileText, Search, Brain } from 'lucide-react';
+import { AlertCircle, CalendarIcon, Clock, Filter, FileText, Search, Brain, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,8 @@ import { useAppDispatch, useAppSelector } from '@/hooks/store';
 import { fetchCurrentSelectedBusiness } from '@/store/slices/businessSlice';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import PremiumFeatureModal from '@/components/premium/PremiumFeatureModal';
+import { hasPremiumAccess } from '@/utils/subscriptionUtils';
 
 const DailyLogs = () => {
   const navigate = useNavigate();
@@ -37,6 +39,10 @@ const DailyLogs = () => {
   } = useDailySummaries();
   
   const { currentBusiness } = useAppSelector(state => state.business);
+  const { user } = useAppSelector(state => state.auth);
+  
+  // Premium feature modal state
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   
   // Fetch daily summaries on component mount
   useEffect(() => {
@@ -215,10 +221,21 @@ const DailyLogs = () => {
                   
                   <Button 
                     variant="default" 
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                    onClick={fetchDailySummary}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 relative group"
+                    onClick={() => {
+                      // Check if user has premium access based on backend's isAllowedPremium flag
+                      if (hasPremiumAccess(user?.subscription)) {
+                        fetchDailySummary();
+                      } else {
+                        // Show premium feature modal
+                        setIsPremiumModalOpen(true);
+                      }
+                    }}
                     disabled={isLoadingAi || filteredSummaries.length === 0}
                   >
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Crown className="h-2.5 w-2.5 text-white" />
+                    </div>
                     <Brain className="mr-2 h-4 w-4" />
                     AI Analytics
                   </Button>
@@ -358,6 +375,13 @@ const DailyLogs = () => {
         dailySummary={dailySummary}
         isLoading={isLoadingAi}
         error={aiError}
+      />
+      
+      {/* Premium Feature Modal */}
+      <PremiumFeatureModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        featureName="AI Analytics"
       />
     </MainLayout>
   );

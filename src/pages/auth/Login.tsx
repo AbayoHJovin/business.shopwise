@@ -149,14 +149,6 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {apiError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{apiError}</AlertDescription>
-            </Alert>
-          )}
-          
           {successMessage && (
             <Alert variant="default" className="mb-4 bg-green-50 text-green-800 border-green-200">
               <CheckCircle className="h-4 w-4 text-green-600" />
