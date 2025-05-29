@@ -105,8 +105,15 @@ export const API_ENDPOINTS = {
     GET_CONVERSATIONS: `${API_BASE_URL}/api/ai/conversations`,
     GET_CONVERSATIONS_SIDEBAR: `${API_BASE_URL}/api/ai/conversations/sidebar`,
     GET_CONVERSATION: (id: string) => `${API_BASE_URL}/api/ai/conversation/${id}`,
+    DELETE_CONVERSATION: (id: string) => `${API_BASE_URL}/api/ai/conversation/${id}`,
     BUSINESS_DAILY_SUMMARY: `${API_BASE_URL}/api/ai/business/daily-summary`,
     EXPENSE_ANALYTICS: `${API_BASE_URL}/api/ai/business/expense-analytics`,
+  },
+  // Subscription endpoints
+  SUBSCRIPTIONS: {
+    FREE_TRIAL: `${API_BASE_URL}/api/subscriptions/free-trial`,
+    CHECK_STATUS: `${API_BASE_URL}/api/subscriptions/status`,
+    PAYMENT: `${API_BASE_URL}/api/subscriptions/payment`,
   },
 };
 

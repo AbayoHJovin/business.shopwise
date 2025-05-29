@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, Suspense, lazy, useCallback, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, MessageSquare, Plus, Bot, Crown } from 'lucide-react';
+import { AlertCircle, MessageSquare, Plus, Bot, Crown, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { clearCurrentConversation, clearError, fetchConversationsSidebar } from '@/store/slices/aiChatSlice';
+import { clearCurrentConversation, clearError, fetchConversationsSidebar, deleteConversation } from '@/store/slices/aiChatSlice';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
@@ -35,6 +36,10 @@ const AiChat = () => {
   
   // Premium feature modal state
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -111,6 +116,35 @@ const AiChat = () => {
     setSidebarOpen(!sidebarOpen);
   };
   
+  // Handle deleting the current conversation
+  const handleDeleteCurrentConversation = useCallback(async () => {
+    if (!currentConversation?.conversationId || currentConversation.conversationId.startsWith('temp-')) {
+      return;
+    }
+    
+    try {
+      setIsDeleting(true);
+      await dispatch(deleteConversation(currentConversation.conversationId)).unwrap();
+      
+      toast({
+        title: "Conversation deleted",
+        description: "The conversation has been successfully deleted."
+      });
+      
+      // The conversation list will be refreshed by the thunk
+      // and currentConversation will be cleared
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete conversation",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+    }
+  }, [currentConversation, dispatch, toast]);
+  
   return (
     <MainLayout title="AI Assistant">
       <div className="container mx-auto py-6">
@@ -157,11 +191,27 @@ const AiChat = () => {
           <div className="flex-1 flex flex-col">
             {/* Chat Header */}
             <div className="p-4 border-b">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-primary" />
-                <h2 className="font-medium">
-                  {currentConversation?.title || "New Conversation"}
-                </h2>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <h2 className="font-medium">
+                    {currentConversation?.title || "New Conversation"}
+                  </h2>
+                </div>
+                
+                {/* Delete button - only show if we have a valid conversation */}
+                {currentConversation && !currentConversation.conversationId.startsWith('temp-') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={isLoadingConversation || isSendingMessage || isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                )}
               </div>
               
               {error && (
@@ -243,6 +293,18 @@ const AiChat = () => {
         isOpen={isPremiumModalOpen}
         onClose={() => setIsPremiumModalOpen(false)}
         featureName="AI Chat"
+      />
+      
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDeleteCurrentConversation}
+        title="Delete Conversation"
+        description="Are you sure you want to delete this conversation? This action cannot be undone."
+        confirmText="Delete"
+        confirmVariant="destructive"
+        isLoading={isDeleting}
       />
     </MainLayout>
   );

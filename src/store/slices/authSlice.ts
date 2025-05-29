@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { API_ENDPOINTS, DEFAULT_REQUEST_OPTIONS } from '@/config/api';
+import { startFreeTrial } from '@/services/subscriptionService';
 
 // Define types for our state
 export type SubscriptionPlan = 'FREE' | 'BASIC' | 'WEEKLY' | 'MONTHLY' | 'PRO_WEEKLY' | 'PRO_MONTHLY';
@@ -225,6 +226,23 @@ export const fetchUserProfile = createAsyncThunk(
   }
 );
 
+// Update user subscription information
+export const updateSubscription = createAsyncThunk(
+  'auth/updateSubscription',
+  async (_, { rejectWithValue }) => {
+    try {
+      // Start free trial and get updated subscription info
+      const subscriptionInfo = await startFreeTrial();
+      return subscriptionInfo;
+    } catch (error) {
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue('An unexpected error occurred');
+    }
+  }
+);
+
 // Create the auth slice
 const authSlice = createSlice({
   name: 'auth',
@@ -251,6 +269,22 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      
+      // Handle updateSubscription thunk
+      .addCase(updateSubscription.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateSubscription.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (state.user) {
+          state.user.subscription = action.payload;
+        }
+      })
+      .addCase(updateSubscription.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

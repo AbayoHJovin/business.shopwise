@@ -17,12 +17,15 @@ import {
   ChevronUp,
   Clock,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { useAppSelector } from '@/hooks/store';
+import { useAppDispatch, useAppSelector } from '@/hooks/store';
 import { SubscriptionType } from '@/components/landing/SubscriptionPlansSection';
+import { checkFreeTrialEligibility } from '@/services/subscriptionService';
+import { updateSubscription } from '@/store/slices/authSlice';
 import { 
   Accordion,
   AccordionContent,
@@ -57,12 +60,14 @@ const paymentDetails: Record<SubscriptionType, PaymentDetails> = {
 const ManualPaymentPage: React.FC = () => {
   const { planType } = useParams<{ planType: SubscriptionType }>();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { toast } = useToast();
-  const { user } = useAppSelector(state => state.auth);
+  const { user, isLoading: authLoading } = useAppSelector(state => state.auth);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isStartingFreeTrial, setIsStartingFreeTrial] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -188,6 +193,37 @@ const ManualPaymentPage: React.FC = () => {
   
   // Get current plan details
   const currentPlan = planType ? paymentDetails[planType] : paymentDetails.monthly;
+  
+  // Check if the user is eligible for a free trial
+  const isEligibleForFreeTrial = checkFreeTrialEligibility(user?.subscription);
+  
+  // Handle starting a free trial
+  const handleStartFreeTrial = async () => {
+    try {
+      setIsStartingFreeTrial(true);
+      
+      // Dispatch the action to start a free trial
+      await dispatch(updateSubscription()).unwrap();
+      
+      // Show success toast
+      toast({
+        title: "Free Trial Started",
+        description: "Your free trial has been activated successfully!",
+      });
+      
+      // Navigate to dashboard
+      navigate('/dashboard');
+    } catch (error) {
+      // Show error toast
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to start free trial",
+        variant: "destructive"
+      });
+    } finally {
+      setIsStartingFreeTrial(false);
+    }
+  };
   
   return (
     <MainLayout title="Manual Payment">
@@ -356,6 +392,37 @@ const ManualPaymentPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
+                  
+                  {/* Free Trial Button */}
+                  {isEligibleForFreeTrial && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <h3 className="font-semibold mb-2 flex items-center">
+                        <Sparkles className="h-4 w-4 text-yellow-500 mr-2" />
+                        Try Before You Buy
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Not ready to commit? Start with a free trial to explore all premium features.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 hover:text-white"
+                        onClick={handleStartFreeTrial}
+                        disabled={isStartingFreeTrial || authLoading}
+                      >
+                        {isStartingFreeTrial ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Starting Free Trial...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Start Free Trial
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 
                 <Separator />

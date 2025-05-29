@@ -85,6 +85,36 @@ export const sendMessage = createAsyncThunk<
   }
 });
 
+export const deleteConversation = createAsyncThunk<
+  { success: boolean, message: string },
+  string,
+  { state: RootState }
+>('aiChat/deleteConversation', async (conversationId, { rejectWithValue, dispatch }) => {
+  try {
+    const response = await fetch(API_ENDPOINTS.AI.DELETE_CONVERSATION(conversationId), {
+      method: 'DELETE',
+      ...DEFAULT_REQUEST_OPTIONS,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return rejectWithValue(errorData.message || 'Failed to delete conversation');
+    }
+
+    const data = await response.json();
+    
+    // Refresh the conversations list after successful deletion
+    dispatch(fetchConversationsSidebar());
+    
+    // If the deleted conversation was the current one, clear it
+    dispatch(clearCurrentConversation());
+    
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(error.message || 'An error occurred while deleting the conversation');
+  }
+});
+
 export const fetchConversationsSidebar = createAsyncThunk<
   ConversationListItem[],
   void,
@@ -176,6 +206,20 @@ const aiChatSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    // Handle deleteConversation
+    builder
+      .addCase(deleteConversation.pending, (state) => {
+        state.isLoadingSidebar = true;
+        state.error = null;
+      })
+      .addCase(deleteConversation.fulfilled, (state, action) => {
+        state.isLoadingSidebar = false;
+        // The conversation list will be refreshed by the thunk
+      })
+      .addCase(deleteConversation.rejected, (state, action) => {
+        state.isLoadingSidebar = false;
+        state.error = action.payload as string;
+      });
     builder
       // Send message
       .addCase(sendMessage.pending, (state) => {
