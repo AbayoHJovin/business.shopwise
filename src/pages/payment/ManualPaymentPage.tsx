@@ -437,7 +437,7 @@ const ManualPaymentPage: React.FC = () => {
                       <ol className="list-decimal pl-5 space-y-2">
                         <li>Open your mobile money app or dial the USSD code</li>
                         <li>Select "Send Money" or "Pay" option</li>
-                        <li>Enter the phone number: <span className="font-medium">078 123 4567</span></li>
+                        <li>Enter the phone number: <span className="font-medium">079 850 9561</span></li>
                         <li>Enter the amount: <span className="font-medium">{currentPlan.price}</span></li>
                         <li>Confirm the payment</li>
                         <li>Take a screenshot of the confirmation</li>
@@ -486,13 +486,13 @@ const ManualPaymentPage: React.FC = () => {
                       <p>If you're having trouble with your payment, please contact our support team:</p>
                       <div className="space-y-2">
                         <p>
-                          <span className="font-medium">Email:</span> support@shopwise.com
+                          <span className="font-medium">Email:</span> abayohirwajovin@gmail.com
                         </p>
                         <p>
-                          <span className="font-medium">Phone:</span> +250 78 123 4567
+                          <span className="font-medium">Phone:</span> +250 79 850 9561
                         </p>
                         <p>
-                          <span className="font-medium">Hours:</span> Monday to Friday, 9AM - 5PM
+                          <span className="font-medium">Hours:</span> Monday to Saturday, 9AM - 9PM
                         </p>
                       </div>
                     </AccordionContent>
