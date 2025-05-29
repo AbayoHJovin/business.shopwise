@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, Suspense, lazy, useCallback } from 'react';
+import React, { useEffect, useRef, Suspense, lazy, useCallback, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, MessageSquare, Plus, Bot } from 'lucide-react';
+import { AlertCircle, MessageSquare, Plus, Bot, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { clearCurrentConversation, clearError, fetchConversationsSidebar } from '@/store/slices/aiChatSlice';
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { fetchCurrentSelectedBusiness } from '@/store/slices/businessSlice';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import PremiumFeatureModal from '@/components/premium/PremiumFeatureModal';
 
 // Lazy load components for better performance
 const ChatMessage = lazy(() => import('@/components/ai-chat/ChatMessage'));
@@ -30,7 +31,10 @@ const AiChat = () => {
   const { currentBusiness } = useAppSelector(state => state.business);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [sidebarOpen, setSidebarOpen] = React.useState(!isMobile);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  
+  // Premium feature modal state
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -127,7 +131,11 @@ const AiChat = () => {
             size="sm" 
             onClick={handleNewChat}
             disabled={isLoadingConversation || isSendingMessage}
+            className="relative group"
           >
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Crown className="h-2.5 w-2.5 text-white" />
+            </div>
             <Plus className="h-4 w-4 mr-2" />
             New Chat
           </Button>
@@ -223,11 +231,19 @@ const AiChat = () => {
               <ChatInput 
                 disabled={(isLoadingConversation || isSendingMessage) && !currentConversation} 
                 conversationId={currentConversation?.conversationId}
+                onPremiumRequired={() => setIsPremiumModalOpen(true)}
               />
             </Suspense>
           </div>
         </div>
       </div>
+      
+      {/* Premium Feature Modal */}
+      <PremiumFeatureModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        featureName="AI Chat"
+      />
     </MainLayout>
   );
 };
