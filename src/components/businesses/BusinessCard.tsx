@@ -19,11 +19,13 @@ const DEFAULT_BUSINESS_IMAGE =
 interface BusinessCardProps {
   business: BusinessDto;
   featured?: boolean;
+  onViewDetails?: (businessId: string) => void;
 }
 
 const BusinessCard: React.FC<BusinessCardProps> = ({
   business,
   featured = false,
+  onViewDetails,
 }) => {
   const navigate = useNavigate();
 
@@ -45,11 +47,15 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
-    // Mark that we're intentionally navigating to prevent issues
-    sessionStorage.setItem("intentional_navigation", "true");
-
-    // Navigate to the business detail page
-    navigate(`/businesses/${business.id}`);
+    if (onViewDetails) {
+      // Use the custom handler if provided (for scroll restoration)
+      onViewDetails(business.id);
+    } else {
+      // Mark that we're intentionally navigating to prevent issues
+      sessionStorage.setItem("intentional_navigation", "true");
+      // Navigate to the business detail page
+      navigate(`/businesses/${business.id}`);
+    }
   };
 
   return (
@@ -89,7 +95,15 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
         <div className="flex items-center text-sm text-muted-foreground gap-1">
           <Store className="h-3.5 w-3.5" />
           <span className="line-clamp-1">
-            {`${business.location.sector}, ${business.location.district}`}
+            {[
+              business.location.village,
+              business.location.cell,
+              business.location.sector,
+              business.location.district,
+              business.location.province,
+            ]
+              .filter(Boolean)
+              .join(", ")}
           </span>
         </div>
       </CardHeader>

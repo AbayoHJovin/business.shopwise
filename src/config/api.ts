@@ -49,8 +49,8 @@ export const API_ENDPOINTS = {
     DISCOVERY: {
       NEAREST: `${API_BASE_URL}/api/businesses/discovery/nearest`,
       WITHIN_RADIUS: `${API_BASE_URL}/api/businesses/discovery/within-radius`,
-      ADVANCED_SEARCH: `${API_BASE_URL}/api/businesses/discovery/advanced-search`,
-      GET_BY_ID: `${API_BASE_URL}/api/businesses/discovery/details`,
+      ADVANCED_SEARCH: `${API_BASE_URL}/api/businesses/discovery/search/advanced`,
+      GET_BY_ID: `${API_BASE_URL}/api/businesses/discovery/get-by-id`,
       PRODUCTS: (businessId: string) =>
         `${API_BASE_URL}/api/businesses/discovery/${businessId}/products`,
       SEARCH_BY_NAME: (name: string) =>

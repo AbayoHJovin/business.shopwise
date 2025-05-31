@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchUserProfile, AuthState, logout } from '@/store/slices/authSlice';
-import type { RootState } from '@/store';
-import { Loader2 } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchUserProfile, AuthState, logout } from "@/store/slices/authSlice";
+import type { RootState } from "@/store";
+import { Loader2 } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface ReduxAuthProviderProps {
   children: React.ReactNode;
@@ -15,16 +15,36 @@ interface ReduxAuthProviderProps {
  */
 const ReduxAuthProvider: React.FC<ReduxAuthProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
-  const { user, isLoading, error, isAuthenticated } = useAppSelector((state: RootState) => state.auth as AuthState);
+  const { user, isLoading, error, isAuthenticated } = useAppSelector(
+    (state: RootState) => state.auth as AuthState
+  );
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Define public routes
-  const publicRoutes = ['/', '/login', '/signup', '/forgot-password', '/reset-password'];
-  
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/businesses",
+    "/businesses/:businessId",
+    "/businesses/:businessId/products",
+  ];
+
   // Helper function to check if current route is public
-  const isPublicRoute = () => publicRoutes.includes(location.pathname);
+  const isPublicRoute = () => {
+    // Convert route parameters like :id to regex pattern for matching
+    return publicRoutes.some((route) => {
+      // Replace route params with regex pattern
+      const pattern = route.replace(/:\w+/g, "[^/]+");
+      // Create regex to match the entire path
+      const regex = new RegExp(`^${pattern}$`);
+      return regex.test(location.pathname);
+    });
+  };
 
   // Check authentication status on mount using the /api/auth/me endpoint
   useEffect(() => {
@@ -32,17 +52,21 @@ const ReduxAuthProvider: React.FC<ReduxAuthProviderProps> = ({ children }) => {
       try {
         // Attempt to fetch the current user using the cookie
         await dispatch(fetchUserProfile()).unwrap();
-      } catch (error: any) {
-        console.log('Not authenticated or session expired:', error);
-        
+      } catch (error: unknown) {
+        console.log("Not authenticated or session expired:", error);
+
         // If we get a 401 error, redirect to login page
-        if (error === 'Unauthorized' || error === 'Invalid token' || error === 'No authentication token') {
+        if (
+          error === "Unauthorized" ||
+          error === "Invalid token" ||
+          error === "No authentication token"
+        ) {
           // Clear auth state
           dispatch(logout());
-          
+
           // Don't redirect if already on login, signup, or public pages
           if (!isPublicRoute()) {
-            navigate('/login', { replace: true });
+            navigate("/login", { replace: true });
           }
         }
       } finally {
@@ -57,10 +81,10 @@ const ReduxAuthProvider: React.FC<ReduxAuthProviderProps> = ({ children }) => {
   useEffect(() => {
     // Only redirect if initial check is done and user is not authenticated
     if (initialCheckDone && !isAuthenticated && !isPublicRoute()) {
-      navigate('/login', { replace: true });
+      navigate("/login", { replace: true });
     }
   }, [isAuthenticated, initialCheckDone, navigate, location.pathname]);
-  
+
   // Show loading spinner or render children
   return initialCheckDone ? (
     <>{children}</>

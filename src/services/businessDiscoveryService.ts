@@ -208,23 +208,40 @@ export const filterBusinessesByVillage = async (
 
 /**
  * Search businesses by product name
+ *
+ * @param productName Name of the product to search for
+ * @param params Location and pagination parameters
  */
 export const searchBusinessesByProduct = async (
   productName: string,
-  params: BusinessSearchParams
+  params: BusinessSearchParams | LocationRequestDto
 ): Promise<PaginatedResponse<BusinessDiscoveryDto>> => {
   try {
+    // Filter out undefined values
+    const cleanParams = Object.fromEntries(
+      Object.entries({
+        ...params,
+        radius: params.radius || 10,
+        skip: params.skip || 0,
+        limit: params.limit || 10,
+      }).filter(([_, v]) => v !== undefined && v !== "")
+    );
+
     const response = await fetch(
       API_ENDPOINTS.BUSINESS.DISCOVERY.SEARCH_BY_PRODUCT(productName),
       {
         method: "POST",
         ...PUBLIC_REQUEST_OPTIONS,
-        body: JSON.stringify(params),
+        body: JSON.stringify(cleanParams),
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to search businesses by product: ${productName}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error ||
+          `Failed to search businesses by product: ${productName}`
+      );
     }
 
     return await response.json();
@@ -239,23 +256,40 @@ export const searchBusinessesByProduct = async (
 
 /**
  * Search businesses by business name
+ *
+ * @param businessName Name of the business to search for
+ * @param params Location and pagination parameters
  */
 export const searchBusinessesByName = async (
   businessName: string,
-  params: BusinessSearchParams
+  params: BusinessSearchParams | LocationRequestDto
 ): Promise<PaginatedResponse<BusinessDiscoveryDto>> => {
   try {
+    // Filter out undefined values
+    const cleanParams = Object.fromEntries(
+      Object.entries({
+        ...params,
+        radius: params.radius || 10,
+        skip: params.skip || 0,
+        limit: params.limit || 10,
+      }).filter(([_, v]) => v !== undefined && v !== "")
+    );
+
     const response = await fetch(
       API_ENDPOINTS.BUSINESS.DISCOVERY.SEARCH_BY_NAME(businessName),
       {
         method: "POST",
         ...PUBLIC_REQUEST_OPTIONS,
-        body: JSON.stringify(params),
+        body: JSON.stringify(cleanParams),
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to search businesses by name: ${businessName}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error ||
+          `Failed to search businesses by name: ${businessName}`
+      );
     }
 
     return await response.json();
@@ -268,7 +302,7 @@ export const searchBusinessesByName = async (
 /**
  * Advanced search for businesses by name and location
  *
- * This endpoint expects a LocationSearchRequestDto with:
+ * This endpoint uses the LocationSearchRequestDto with:
  * - latitude, longitude: User's location coordinates
  * - businessName, productName: Optional search terms
  * - province, district, sector, cell, village: Optional location filters
@@ -279,20 +313,22 @@ export const advancedSearchBusinesses = async (
   params: AdvancedSearchParams
 ): Promise<PaginatedResponse<BusinessDiscoveryDto>> => {
   try {
-    // Ensure default values are set
-    const searchParams = {
-      ...params,
-      radius: params.radius || 10,
-      skip: params.skip || 0,
-      limit: params.limit || 10,
-    };
+    // Filter out undefined values and ensure default values are set
+    const cleanParams = Object.fromEntries(
+      Object.entries({
+        ...params,
+        radius: params.radius || 10,
+        skip: params.skip || 0,
+        limit: params.limit || 10,
+      }).filter(([_, v]) => v !== undefined && v !== "")
+    );
 
     const response = await fetch(
       API_ENDPOINTS.BUSINESS.DISCOVERY.ADVANCED_SEARCH,
       {
         method: "POST",
         ...PUBLIC_REQUEST_OPTIONS,
-        body: JSON.stringify(searchParams),
+        body: JSON.stringify(cleanParams),
       }
     );
 
@@ -352,20 +388,22 @@ export const getPublicBusinessDetails = async (
   businessId: string
 ): Promise<BusinessDiscoveryDto> => {
   try {
-    const response = await fetch(
-      `${API_ENDPOINTS.BUSINESS.DISCOVERY.GET_BY_ID}/${businessId}`,
-      {
-        method: "GET",
-        ...PUBLIC_REQUEST_OPTIONS,
-      }
-    );
+    const url = `${API_ENDPOINTS.BUSINESS.DISCOVERY.GET_BY_ID}/${businessId}`;
+    console.log('Fetching business details from:', url);
+    
+    const response = await fetch(url, {
+      method: "GET",
+      ...PUBLIC_REQUEST_OPTIONS,
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || "Failed to fetch business details");
+      throw new Error(errorData.error || `Failed to fetch business details: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('Business details received:', data);
+    return data;
   } catch (error) {
     console.error(
       `Error fetching business details for ID ${businessId}:`,

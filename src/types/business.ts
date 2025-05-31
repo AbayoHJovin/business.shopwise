@@ -15,6 +15,7 @@ export interface BusinessDiscoveryDto {
   about: string;
   websiteLink: string;
   productCount: number;
+  employeeCount?: number;
   distanceKm?: number;
   formattedDistance?: string;
 }
@@ -64,7 +65,7 @@ export interface BusinessSearchParams extends LocationRequestDto {
   skipLocationFilter?: boolean;
 }
 
-export interface RadiusSearchParams extends LocationRequestDto {}
+export type RadiusSearchParams = LocationRequestDto;
 
 export interface LocationFilters {
   province?: string;

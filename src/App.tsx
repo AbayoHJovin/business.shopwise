@@ -38,6 +38,7 @@ import ManualPaymentPage from "./pages/payment/ManualPaymentPage";
 // Import Business Discovery pages
 import BusinessesPage from "./pages/businesses";
 import BusinessDetail from "./pages/businesses/detail";
+import BusinessProducts from "./pages/businesses/products";
 
 const queryClient = new QueryClient();
 
@@ -77,7 +78,14 @@ const App = () => (
 
             {/* Business Discovery Routes */}
             <Route path="/businesses" element={<BusinessesPage />} />
-            <Route path="/businesses/:id" element={<BusinessDetail />} />
+            <Route
+              path="/businesses/:businessId"
+              element={<BusinessDetail />}
+            />
+            <Route
+              path="/businesses/:businessId/products"
+              element={<BusinessProducts />}
+            />
 
             {/* Dashboard Routes - Protected */}
             <Route
