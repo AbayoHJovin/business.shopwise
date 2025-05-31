@@ -38,6 +38,56 @@ export interface ProductDto {
   category: string;
 }
 
+/**
+ * DTO for public product information matching backend PublicProductDto
+ */
+export interface PublicProductDto {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  imageUrls: string[];
+  businessId: string;
+  businessName: string;
+  category?: string;
+
+  // Additional calculated fields for packet information
+  fullPacketsAvailable?: number;
+  additionalUnits?: number;
+  itemsPerPacket?: number;
+
+  // Additional pricing details
+  unitPrice?: number;
+  fulfillmentCost?: number;
+  packetPrice?: number; // Price per full packet
+}
+
+/**
+ * DTO for product pagination and sorting requests
+ */
+export interface ProductPageRequestDto {
+  skip?: number;
+  limit?: number;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  searchTerm?: string;
+}
+
+/**
+ * DTO for paginated product responses
+ */
+export interface ProductPageResponseDto {
+  products: PublicProductDto[];
+  totalCount: number;
+  skip: number;
+  limit: number;
+  hasMore: boolean;
+  sortBy: string;
+  sortDirection: string;
+  businessName: string;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   totalCount: number;

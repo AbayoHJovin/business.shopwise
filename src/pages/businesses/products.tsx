@@ -12,6 +12,14 @@ import {
   XCircle,
   Search,
   RefreshCw,
+  Info,
+  ChevronRight,
+  ChevronLeft,
+  ExternalLink,
+  Box,
+  Tag,
+  DollarSign,
+  ShoppingCart,
 } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import { Button } from "@/components/ui/button";
@@ -34,10 +42,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { API_ENDPOINTS, PUBLIC_REQUEST_OPTIONS } from "@/config/api";
+import {
   getPublicBusinessDetails,
   getBusinessProducts,
 } from "@/services/businessDiscoveryService";
-import { BusinessDiscoveryDto, ProductDto } from "@/types/business";
+import {
+  BusinessDiscoveryDto,
+  PublicProductDto,
+  ProductPageRequestDto,
+  ProductPageResponseDto,
+} from "@/types/business";
 
 // Default product image
 const DEFAULT_PRODUCT_IMAGE =
@@ -47,14 +77,38 @@ const BusinessProducts: React.FC = () => {
   const { businessId } = useParams<{ businessId: string }>();
   const navigate = useNavigate();
   const [business, setBusiness] = useState<BusinessDiscoveryDto | null>(null);
-  const [products, setProducts] = useState<ProductDto[]>([]);
+  const [products, setProducts] = useState<PublicProductDto[]>([]);
   const [productCount, setProductCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [productFilter, setProductFilter] = useState("");
-  const [productSort, setProductSort] = useState("nameAsc");
+  const [productSort, setProductSort] = useState<{
+    by: string;
+    direction: "asc" | "desc";
+  }>({
+    by: "name",
+    direction: "asc",
+  });
   const [productView, setProductView] = useState("grid");
+  const [selectedProduct, setSelectedProduct] =
+    useState<PublicProductDto | null>(null);
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [productPage, setProductPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+
+  // Products per page
+  const LIMIT = 12;
+
+  // Format currency with commas and RWF
+  const formatCurrency = (amount: number) => {
+    return (
+      new Intl.NumberFormat("en-RW", {
+        style: "decimal",
+        maximumFractionDigits: 0,
+      }).format(amount) + " RWF"
+    );
+  };
 
   // Fetch business details on mount
   useEffect(() => {
@@ -71,9 +125,9 @@ const BusinessProducts: React.FC = () => {
 
     try {
       // Making direct API call to ensure we hit the correct endpoint
-      const apiUrl = `http://localhost:5000/api/businesses/discovery/get-by-id/${businessId}`;
+      const apiUrl = `${API_ENDPOINTS.BUSINESS.DISCOVERY.GET_BY_ID}/${businessId}`;
       console.log("API URL:", apiUrl);
-      
+
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
@@ -82,7 +136,9 @@ const BusinessProducts: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch business: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch business: ${response.status} ${response.statusText}`
+        );
       }
 
       const businessData = await response.json();
@@ -90,7 +146,7 @@ const BusinessProducts: React.FC = () => {
       setBusiness(businessData);
 
       // Fetch products after getting business details
-      fetchBusinessProducts(businessId);
+      await fetchBusinessProducts(businessId, true);
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -104,30 +160,38 @@ const BusinessProducts: React.FC = () => {
   };
 
   // Fetch business products from API
-  const fetchBusinessProducts = async (businessId: string, skip = 0) => {
+  const fetchBusinessProducts = async (
+    businessId: string,
+    resetList = false
+  ) => {
     setProductsLoading(true);
     console.log("Fetching products for business ID:", businessId);
 
     try {
-      const apiUrl = `http://localhost:5000/api/businesses/discovery/${businessId}/products`;
-      console.log("Products API URL:", apiUrl);
-      
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ skip, limit: 50 }),
-      });
+      const skip = resetList ? 0 : productPage * LIMIT;
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch products: ${response.status} ${response.statusText}`);
+      // Create request payload based on current sort and filter
+      const request: ProductPageRequestDto = {
+        skip,
+        limit: LIMIT,
+        sortBy: productSort.by,
+        sortDirection: productSort.direction,
+        searchTerm: productFilter || undefined,
+      };
+
+      const data = await getBusinessProducts(businessId, request);
+
+      // Update product list
+      if (resetList) {
+        setProducts(data.products || []);
+        setProductPage(0);
+      } else {
+        setProducts((prev) => [...prev, ...(data.products || [])]);
+        setProductPage((prev) => prev + 1);
       }
 
-      const data = await response.json();
-      console.log("Products data received:", data);
-      setProducts(data.data || []);
       setProductCount(data.totalCount || 0);
+      setHasMore(data.hasMore || false);
     } catch (err) {
       console.error("Error fetching business products:", err);
     } finally {
@@ -135,30 +199,49 @@ const BusinessProducts: React.FC = () => {
     }
   };
 
-  // Filter and sort products
-  const filteredProducts = products
-    .filter(
-      (product) =>
-        product.name.toLowerCase().includes(productFilter.toLowerCase()) ||
-        product.description
-          ?.toLowerCase()
-          .includes(productFilter.toLowerCase()) ||
-        product.category?.toLowerCase().includes(productFilter.toLowerCase())
-    )
-    .sort((a, b) => {
-      switch (productSort) {
-        case "nameAsc":
-          return a.name.localeCompare(b.name);
-        case "nameDesc":
-          return b.name.localeCompare(a.name);
-        case "priceAsc":
-          return a.price - b.price;
-        case "priceDesc":
-          return b.price - a.price;
-        default:
-          return 0;
-      }
+  // Handle sorting change
+  const handleSortChange = (value: string) => {
+    // Parse the sorting option
+    const [by, direction] = value.split(/(?=[A-Z])/);
+    const sortDirection = direction.toLowerCase() as "asc" | "desc";
+
+    setProductSort({
+      by: by.toLowerCase(),
+      direction: sortDirection,
     });
+
+    // Refetch products with new sort
+    if (businessId) {
+      fetchBusinessProducts(businessId, true);
+    }
+  };
+
+  // Handle search filter change
+  const handleFilterChange = (value: string) => {
+    setProductFilter(value);
+
+    // Debounce search to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      if (businessId) {
+        fetchBusinessProducts(businessId, true);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  };
+
+  // Handle load more products
+  const handleLoadMore = () => {
+    if (businessId && hasMore && !productsLoading) {
+      fetchBusinessProducts(businessId, false);
+    }
+  };
+
+  // Open product details dialog
+  const handleViewProductDetails = (product: PublicProductDto) => {
+    setSelectedProduct(product);
+    setProductDialogOpen(true);
+  };
 
   // Handle back navigation
   const handleBack = () => {
@@ -168,7 +251,11 @@ const BusinessProducts: React.FC = () => {
   // Reset filters
   const handleResetFilters = () => {
     setProductFilter("");
-    setProductSort("nameAsc");
+    setProductSort({ by: "name", direction: "asc" });
+
+    if (businessId) {
+      fetchBusinessProducts(businessId, true);
+    }
   };
 
   // Loading state
@@ -280,14 +367,19 @@ const BusinessProducts: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search products by name, description, or category..."
+                placeholder="Search products by name..."
                 className="pl-10"
                 value={productFilter}
-                onChange={(e) => setProductFilter(e.target.value)}
+                onChange={(e) => handleFilterChange(e.target.value)}
               />
             </div>
             <div className="flex gap-2">
-              <Select value={productSort} onValueChange={setProductSort}>
+              <Select
+                value={`${productSort.by}${
+                  productSort.direction === "asc" ? "Asc" : "Desc"
+                }`}
+                onValueChange={handleSortChange}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
@@ -326,7 +418,7 @@ const BusinessProducts: React.FC = () => {
           </div>
 
           {/* Products */}
-          {productsLoading ? (
+          {productsLoading && products.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, index) => (
                 <Card key={index} className="animate-pulse">
@@ -338,95 +430,40 @@ const BusinessProducts: React.FC = () => {
                 </Card>
               ))}
             </div>
-          ) : filteredProducts.length > 0 ? (
-            productView === "grid" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => (
-                  <Card
-                    key={product.id}
-                    className="overflow-hidden h-full flex flex-col"
-                  >
-                    <div className="h-48 relative">
-                      <img
-                        src={product.imageUrls?.[0] || DEFAULT_PRODUCT_IMAGE}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                      {product.category && (
-                        <Badge className="absolute top-2 right-2">
-                          {product.category}
-                        </Badge>
-                      )}
-                    </div>
-                    <CardContent className="p-4 flex-grow">
-                      <h3 className="font-medium text-lg line-clamp-1">
-                        {product.name}
-                      </h3>
-                      <p className="text-muted-foreground text-sm line-clamp-2 mt-1">
-                        {product.description || "No description available"}
-                      </p>
-                    </CardContent>
-                    <CardFooter className="px-4 py-3 border-t flex justify-between items-center">
-                      <p className="font-bold text-primary">
-                        ${product.price.toFixed(2)}
-                      </p>
-                      {product.quantity > 0 ? (
-                        <Badge
-                          variant="outline"
-                          className="flex items-center gap-1 bg-green-50 text-green-600 border-green-200"
-                        >
-                          <Check className="h-3 w-3" />
-                          In Stock
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="flex items-center gap-1 bg-red-50 text-red-600 border-red-200"
-                        >
-                          <XCircle className="h-3 w-3" />
-                          Out of Stock
-                        </Badge>
-                      )}
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredProducts.map((product) => (
-                  <Card key={product.id}>
-                    <div className="flex flex-col sm:flex-row">
-                      <div className="w-full sm:w-48 h-48">
+          ) : products.length > 0 ? (
+            <>
+              {productView === "grid" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {products.map((product) => (
+                    <Card
+                      key={product.id}
+                      className="overflow-hidden h-full flex flex-col"
+                    >
+                      <div className="h-48 relative">
                         <img
                           src={product.imageUrls?.[0] || DEFAULT_PRODUCT_IMAGE}
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />
+                        {product.category && (
+                          <Badge className="absolute top-2 right-2">
+                            {product.category}
+                          </Badge>
+                        )}
                       </div>
-                      <div className="p-4 flex-1">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium text-lg">
-                              {product.name}
-                            </h3>
-                            {product.category && (
-                              <Badge className="mt-1">{product.category}</Badge>
-                            )}
-                          </div>
-                          <p className="font-bold text-lg text-primary">
-                            ${product.price.toFixed(2)}
-                          </p>
-                        </div>
-                        <p className="text-muted-foreground mt-2">
+                      <CardContent className="p-4 flex-grow">
+                        <h3 className="font-medium text-lg line-clamp-1">
+                          {product.name}
+                        </h3>
+                        <p className="text-muted-foreground text-sm line-clamp-2 mt-1">
                           {product.description || "No description available"}
                         </p>
-                        <div className="flex justify-between items-center mt-4">
-                          <div className="flex items-center">
-                            <Package className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              Quantity: {product.quantity}
-                            </span>
-                          </div>
+                      </CardContent>
+                      <CardFooter className="px-4 py-3 border-t flex flex-col gap-2">
+                        <div className="w-full flex justify-between items-center">
+                          <p className="font-bold text-primary">
+                            {formatCurrency(product.unitPrice)}
+                          </p>
                           {product.quantity > 0 ? (
                             <Badge
                               variant="outline"
@@ -445,12 +482,120 @@ const BusinessProducts: React.FC = () => {
                             </Badge>
                           )}
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleViewProductDetails(product)}
+                        >
+                          <Info className="h-4 w-4 mr-2" />
+                          View Details
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {products.map((product) => (
+                    <Card key={product.id}>
+                      <div className="flex flex-col sm:flex-row">
+                        <div className="w-full sm:w-48 h-48">
+                          <img
+                            src={
+                              product.imageUrls?.[0] || DEFAULT_PRODUCT_IMAGE
+                            }
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-4 flex-1">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                            <div>
+                              <h3 className="font-medium text-lg line-clamp-1">
+                                {product.name}
+                              </h3>
+                              {product.category && (
+                                <Badge className="mt-1">
+                                  {product.category}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="font-bold text-lg text-primary mt-1 sm:mt-0">
+                              {formatCurrency(product.unitPrice)}
+                            </p>
+                          </div>
+
+                          <p className="text-muted-foreground mt-2 line-clamp-3">
+                            {product.description || "No description available"}
+                          </p>
+
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mt-4">
+                            <div className="flex items-center">
+                              <Package className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">
+                                Quantity: {product.quantity}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                              {product.quantity > 0 ? (
+                                <Badge
+                                  variant="outline"
+                                  className="flex items-center gap-1 bg-green-50 text-green-600 border-green-200"
+                                >
+                                  <Check className="h-3 w-3" />
+                                  In Stock
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  variant="outline"
+                                  className="flex items-center gap-1 bg-red-50 text-red-600 border-red-200"
+                                >
+                                  <XCircle className="h-3 w-3" />
+                                  Out of Stock
+                                </Badge>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleViewProductDetails(product)
+                                }
+                                className="whitespace-nowrap"
+                              >
+                                <Info className="h-4 w-4 mr-2" />
+                                View Details
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {/* Load more button */}
+              {hasMore && (
+                <div className="mt-8 text-center">
+                  <Button
+                    onClick={handleLoadMore}
+                    disabled={productsLoading}
+                    className="min-w-[200px]"
+                  >
+                    {productsLoading ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>Load More Products</>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
           ) : (
             <Card className="p-6 text-center">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -474,6 +619,164 @@ const BusinessProducts: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Product Detail Dialog */}
+      <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          {selectedProduct && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl flex items-center gap-2">
+                  <Package className="h-5 w-5 text-primary" />
+                  <span className="line-clamp-2">{selectedProduct.name}</span>
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedProduct.category && (
+                    <Badge className="mt-1">{selectedProduct.category}</Badge>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* Product images carousel */}
+              {selectedProduct.imageUrls &&
+              selectedProduct.imageUrls.length > 0 ? (
+                <div className="my-4">
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {selectedProduct.imageUrls.map((url, index) => (
+                        <CarouselItem key={index}>
+                          <div className="p-1 h-[200px] sm:h-[300px]">
+                            <img
+                              src={url || DEFAULT_PRODUCT_IMAGE}
+                              alt={`${selectedProduct.name} - Image ${
+                                index + 1
+                              }`}
+                              className="w-full h-full object-contain rounded-md"
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-1 sm:left-2 h-7 w-7 sm:h-8 sm:w-8" />
+                    <CarouselNext className="right-1 sm:right-2 h-7 w-7 sm:h-8 sm:w-8" />
+                  </Carousel>
+                </div>
+              ) : (
+                <div className="my-4 h-[200px] sm:h-[300px] bg-muted flex items-center justify-center rounded-md">
+                  <Package className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
+                </div>
+              )}
+
+              {/* Product details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">
+                    Product Information
+                  </h3>
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground text-sm sm:text-base">
+                      {selectedProduct.description ||
+                        "No description available."}
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Category:</span>
+                      <span className="text-sm text-muted-foreground">
+                        {selectedProduct.category || "Uncategorized"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Box className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Quantity:</span>
+                      <span className="text-sm text-muted-foreground">
+                        {selectedProduct.quantity} units available
+                      </span>
+                    </div>
+
+                    {selectedProduct.fullPacketsAvailable !== undefined && (
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Packets:</span>
+                        <span className="text-sm text-muted-foreground">
+                          {selectedProduct.fullPacketsAvailable} full packets
+                          {selectedProduct.additionalUnits
+                            ? ` + ${selectedProduct.additionalUnits} units`
+                            : ""}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-lg mb-2 mt-4 md:mt-0">
+                    Pricing Details
+                  </h3>
+                  <div className="space-y-4 border rounded-md p-3 sm:p-4">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Unit Price:</span>
+                      <span className="text-lg sm:text-xl font-bold text-primary">
+                        {formatCurrency(selectedProduct.unitPrice)}
+                      </span>
+                    </div>
+
+                    {selectedProduct.packetPrice !== undefined && (
+                      <div className="flex justify-between items-center text-sm text-muted-foreground">
+                        <span>Packet Price:</span>
+                        <span>
+                          {formatCurrency(selectedProduct.packetPrice)}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedProduct.fulfillmentCost !== undefined && (
+                      <div className="flex justify-between items-center text-sm text-muted-foreground">
+                        <span>Fulfillment Cost:</span>
+                        <span>
+                          {formatCurrency(selectedProduct.fulfillmentCost)}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="pt-2 border-t mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Availability:</span>
+                        {selectedProduct.quantity > 0 ? (
+                          <Badge
+                            variant="outline"
+                            className="flex items-center gap-1 bg-green-50 text-green-600 border-green-200"
+                          >
+                            <Check className="h-3 w-3" />
+                            In Stock
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="flex items-center gap-1 bg-red-50 text-red-600 border-red-200"
+                          >
+                            <XCircle className="h-3 w-3" />
+                            Out of Stock
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-6">
+                <DialogClose asChild>
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Close
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

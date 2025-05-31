@@ -4,6 +4,9 @@ import {
   BusinessSearchParams,
   PaginatedResponse,
   ProductDto,
+  PublicProductDto,
+  ProductPageRequestDto,
+  ProductPageResponseDto,
   RadiusSearchParams,
   AdvancedSearchParams,
   LocationRequestDto,
@@ -39,16 +42,24 @@ export const getNearestBusinesses = async (
  */
 export const getBusinessProducts = async (
   businessId: string,
-  skip: number = 0,
-  limit: number = 10
-): Promise<PaginatedResponse<ProductDto>> => {
+  request: ProductPageRequestDto = {}
+): Promise<ProductPageResponseDto> => {
   try {
+    // Set default values if not provided
+    const requestWithDefaults = {
+      skip: 0,
+      limit: 10,
+      sortBy: "name",
+      sortDirection: "asc" as const,
+      ...request,
+    };
+
     const response = await fetch(
       API_ENDPOINTS.BUSINESS.DISCOVERY.PRODUCTS(businessId),
       {
         method: "POST",
         ...PUBLIC_REQUEST_OPTIONS,
-        body: JSON.stringify({ skip, limit }),
+        body: JSON.stringify(requestWithDefaults),
       }
     );
 
@@ -389,8 +400,8 @@ export const getPublicBusinessDetails = async (
 ): Promise<BusinessDiscoveryDto> => {
   try {
     const url = `${API_ENDPOINTS.BUSINESS.DISCOVERY.GET_BY_ID}/${businessId}`;
-    console.log('Fetching business details from:', url);
-    
+    console.log("Fetching business details from:", url);
+
     const response = await fetch(url, {
       method: "GET",
       ...PUBLIC_REQUEST_OPTIONS,
@@ -398,11 +409,14 @@ export const getPublicBusinessDetails = async (
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Failed to fetch business details: ${response.status} ${response.statusText}`);
+      throw new Error(
+        errorData.error ||
+          `Failed to fetch business details: ${response.status} ${response.statusText}`
+      );
     }
 
     const data = await response.json();
-    console.log('Business details received:', data);
+    console.log("Business details received:", data);
     return data;
   } catch (error) {
     console.error(

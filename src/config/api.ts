@@ -52,7 +52,7 @@ export const API_ENDPOINTS = {
       ADVANCED_SEARCH: `${API_BASE_URL}/api/businesses/discovery/search/advanced`,
       GET_BY_ID: `${API_BASE_URL}/api/businesses/discovery/get-by-id`,
       PRODUCTS: (businessId: string) =>
-        `${API_BASE_URL}/api/businesses/discovery/${businessId}/products`,
+        `${API_BASE_URL}/api/businesses/discovery/products/${businessId}`,
       SEARCH_BY_NAME: (name: string) =>
         `${API_BASE_URL}/api/businesses/discovery/search/name/${name}`,
       SEARCH_BY_PRODUCT: (productName: string) =>

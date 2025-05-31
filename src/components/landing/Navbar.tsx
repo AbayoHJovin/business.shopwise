@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Store } from "lucide-react";
 import { useActiveSection } from "@/hooks/useActiveSection";
@@ -7,6 +7,7 @@ import { useActiveSection } from "@/hooks/useActiveSection";
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const activeSection = useActiveSection([
     "about",
     "how-it-works",
@@ -32,6 +33,18 @@ const Navbar = () => {
   };
 
   const scrollToSection = (sectionId: string) => {
+    // Close mobile menu if open
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+
+    // If we're not on the landing page, navigate there first with the hash
+    if (location.pathname !== "/") {
+      navigate(`/#${sectionId}`);
+      return;
+    }
+
+    // If already on landing page, just scroll to the section
     // Update URL with hash without causing a page reload
     window.history.pushState(null, "", `/#${sectionId}`);
 
@@ -47,11 +60,6 @@ const Navbar = () => {
         top: offsetPosition,
         behavior: "smooth",
       });
-
-      // Close mobile menu if open
-      if (mobileMenuOpen) {
-        setMobileMenuOpen(false);
-      }
     }
   };
 
