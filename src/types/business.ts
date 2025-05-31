@@ -18,6 +18,7 @@ export interface BusinessDiscoveryDto {
   employeeCount?: number;
   distanceKm?: number;
   formattedDistance?: string;
+  open?: boolean;
 }
 
 export type BusinessDto = BusinessDiscoveryDto;

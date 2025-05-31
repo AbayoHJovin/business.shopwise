@@ -11,6 +11,7 @@ import {
   Building,
   ExternalLink,
   ChevronRight,
+  Clock,
 } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import { Button } from "@/components/ui/button";
@@ -212,17 +213,43 @@ const BusinessDetail: React.FC = () => {
         {/* Business header */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="rounded-lg overflow-hidden shadow-md">
+            <div className="rounded-lg overflow-hidden shadow-md relative">
               <img
                 src={DEFAULT_BUSINESS_IMAGE}
                 alt={business.name}
                 className="w-full h-64 object-cover"
               />
+              {/* Business availability status */}
+              <div className="absolute top-4 right-4">
+                <Badge
+                  className={`text-white px-3 py-1 text-sm font-medium ${
+                    business.open
+                      ? "bg-green-500 hover:bg-green-600"
+                      : "bg-red-500 hover:bg-red-600"
+                  }`}
+                >
+                  <Clock className="h-4 w-4 mr-1" />
+                  {business.open ? "Open Now" : "Closed"}
+                </Badge>
+              </div>
             </div>
             <div className="mt-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold">{business.name}</h1>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-3xl font-bold">{business.name}</h1>
+                    {/* Small availability badge next to name */}
+                    <Badge
+                      variant={business.open ? "default" : "destructive"}
+                      className={`h-fit ${
+                        business.open
+                          ? "bg-green-500 hover:bg-green-600 text-white"
+                          : ""
+                      }`}
+                    >
+                      {business.open ? "Open" : "Closed"}
+                    </Badge>
+                  </div>
                   <div className="flex items-center mt-2 text-muted-foreground">
                     <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
                     <span>{formattedLocation}</span>
@@ -276,6 +303,22 @@ const BusinessDetail: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                      Status
+                    </span>
+                    <Badge
+                      variant={business.open ? "default" : "destructive"}
+                      className={`flex items-center gap-1 ${
+                        business.open
+                          ? "bg-green-500 hover:bg-green-600 text-white"
+                          : ""
+                      }`}
+                    >
+                      {business.open ? "Open Now" : "Closed"}
+                    </Badge>
+                  </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="flex items-center">
                       <Package className="h-4 w-4 mr-2 text-muted-foreground" />
