@@ -29,6 +29,7 @@ import BusinessMap from "@/components/businesses/BusinessMap";
 import { getPublicBusinessDetails } from "@/services/businessDiscoveryService";
 import { BusinessDiscoveryDto } from "@/types/business";
 import { Skeleton } from "@/components/ui/skeleton";
+import { API_BASE_URL } from "@/config/api";
 
 // Default business image
 const DEFAULT_BUSINESS_IMAGE =
@@ -85,7 +86,7 @@ const BusinessDetail: React.FC = () => {
 
     try {
       // Making direct API call to ensure we hit the correct endpoint
-      const apiUrl = `http://localhost:5000/api/businesses/discovery/get-by-id/${businessId}`;
+      const apiUrl = `${API_BASE_URL}/api/businesses/discovery/get-by-id/${businessId}`;
       console.log("API URL:", apiUrl);
 
       const response = await fetch(apiUrl, {

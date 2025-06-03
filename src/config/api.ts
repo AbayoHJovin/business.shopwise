@@ -4,9 +4,9 @@
  */
 
 // Base URL for API requests
-export const API_BASE_URL = "http://localhost:5000"; // Backend running on port 5000
+export const prod = process.env.NODE_ENV === "production";
+export const API_BASE_URL = prod ? "https://shopwise-1c09.onrender.com" : "http://localhost:5000";
 
-// API endpoints
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
