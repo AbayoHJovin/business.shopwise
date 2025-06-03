@@ -69,7 +69,8 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-primary">ShopWise</span>
+            <img src="logo.png" alt="ShopWise Logo" className="h-8 w-auto sm:h-10 object-contain max-w-[150px]" />
+              {/* <span className="text-2xl font-bold text-primary">ShopWise</span> */}
             </Link>
           </div>
 
